@@ -8,6 +8,7 @@ preprocessing/model/tagging modules.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from math import ceil
 from pathlib import Path
 
 import pandas as pd
@@ -31,9 +32,13 @@ from src.utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 MAX_REVIEWS_PER_PRODUK = 120
+MAX_REVIEW_PAGES_PER_FILTER = 20
+MAX_STAGNANT_PAGES = 2
+RATING_FILTERS = (1, 2, 3, 4, 5)
 REVIEW_SECTION_SELECTOR = "div.shopee-product-comment-list"
 REVIEW_ITEM_SELECTOR = "div[data-cmtid]"
 NEXT_BUTTON_SELECTOR = "button.shopee-icon-button--right"
+RATING_FILTER_SELECTOR = "div.product-rating-overview__filter"
 AUTHOR_SELECTOR = ":scope > div:nth-child(2) > div:nth-child(1) > a"
 CONTENT_SELECTOR = ":scope > div:nth-child(2) > div:nth-child(2)"
 STAR_SELECTOR = "svg.icon-rating-solid"
@@ -149,6 +154,61 @@ def wait_for_reviews(page: Page) -> bool:
         return False
 
 
+def select_review_filter(page: Page, filter_text: str) -> bool:
+    """Select a Shopee review filter by visible text.
+
+    Args:
+        page: Product page.
+        filter_text: Visible text contained by the target filter.
+
+    Returns:
+        True when the filter was clicked successfully.
+    """
+    filter_button = page.locator(RATING_FILTER_SELECTOR).filter(has_text=filter_text)
+
+    try:
+        if filter_button.count() == 0:
+            logger.warning("Filter %s tidak ditemukan", filter_text)
+            return False
+
+        filter_button.first.scroll_into_view_if_needed()
+        jeda(0.8, 1.2)
+        filter_button.first.click()
+        jeda(2.0, 3.0)
+        return wait_for_reviews(page)
+    except PlaywrightTimeoutError as exc:
+        logger.warning("Timeout saat memilih filter %s: %s", filter_text, exc)
+        return False
+    except PlaywrightError as exc:
+        logger.warning("Gagal memilih filter %s: %s", filter_text, exc)
+        return False
+
+
+def select_rating_filter(page: Page, rating: int) -> bool:
+    """Select Shopee review filter for a specific star rating.
+
+    Args:
+        page: Product page.
+        rating: Star rating to select, from 1 to 5.
+
+    Returns:
+        True when the rating filter was clicked successfully.
+    """
+    return select_review_filter(page, f"{rating} bintang")
+
+
+def select_all_reviews_filter(page: Page) -> bool:
+    """Select Shopee review filter for all ratings.
+
+    Args:
+        page: Product page.
+
+    Returns:
+        True when the all-reviews filter was clicked successfully.
+    """
+    return select_review_filter(page, "Semua")
+
+
 def is_next_button_disabled(next_button: ElementHandle) -> bool:
     """Check whether the Shopee review next-page button is disabled.
 
@@ -190,13 +250,101 @@ def go_to_next_review_page(page: Page) -> bool:
     return True
 
 
+def collect_visible_reviews(
+    page: Page,
+    product_url: str,
+    seen_review_ids: set[str],
+    max_reviews: int,
+    rating_filter: int | None = None,
+) -> list[ShopeeReview]:
+    """Collect reviews from the currently selected review filter.
+
+    Args:
+        page: Product page with a review filter already selected.
+        product_url: Shopee product URL.
+        seen_review_ids: Global review IDs already emitted in this run.
+        max_reviews: Maximum reviews to collect from the current filter.
+        rating_filter: Selected star rating, or None for Shopee default filter.
+
+    Returns:
+        Raw review records from the visible review list.
+    """
+    collected_reviews: list[ShopeeReview] = []
+    page_number = 1
+    stagnant_pages = 0
+
+    while (
+        len(collected_reviews) < max_reviews
+        and page_number <= MAX_REVIEW_PAGES_PER_FILTER
+        and stagnant_pages < MAX_STAGNANT_PAGES
+    ):
+        logger.info(
+            "Mengekstrak halaman ulasan %s untuk filter %s",
+            page_number,
+            f"{rating_filter} bintang" if rating_filter else "default",
+        )
+        jeda(1.5, 2.5)
+        reviews_before_page = len(collected_reviews)
+
+        review_elements = page.query_selector_all(REVIEW_ITEM_SELECTOR)
+        if not review_elements:
+            logger.info("Tidak ada elemen ulasan pada halaman ini")
+            break
+
+        for review_element in review_elements:
+            if len(collected_reviews) >= max_reviews:
+                logger.info("Batas maksimal %s ulasan filter ini tercapai", max_reviews)
+                break
+
+            review = extract_review(review_element, product_url, seen_review_ids)
+            if review is None:
+                continue
+
+            if rating_filter is not None and review.rating != rating_filter:
+                logger.warning(
+                    "Review %s punya rating %s, bukan filter %s",
+                    review.id_komentar,
+                    review.rating,
+                    rating_filter,
+                )
+                continue
+
+            collected_reviews.append(review)
+            seen_review_ids.add(review.id_komentar)
+
+        if len(collected_reviews) == reviews_before_page:
+            stagnant_pages += 1
+            logger.info(
+                "Tidak ada review baru pada halaman ini. Stagnasi %s/%s",
+                stagnant_pages,
+                MAX_STAGNANT_PAGES,
+            )
+        else:
+            stagnant_pages = 0
+
+        logger.info("Terkumpul %s ulasan dari filter ini", len(collected_reviews))
+
+        if len(collected_reviews) >= max_reviews or not go_to_next_review_page(page):
+            break
+        page_number += 1
+
+    if page_number > MAX_REVIEW_PAGES_PER_FILTER:
+        logger.warning(
+            "Batas %s halaman tercapai untuk filter %s",
+            MAX_REVIEW_PAGES_PER_FILTER,
+            f"{rating_filter} bintang" if rating_filter else "default",
+        )
+
+    return collected_reviews
+
+
 def scrape_product_reviews(
     page: Page,
     product_url: str,
     seen_review_ids: set[str],
     max_reviews: int = MAX_REVIEWS_PER_PRODUK,
 ) -> list[ShopeeReview]:
-    """Scrape raw reviews for one Shopee product URL.
+    """Scrape balanced raw reviews for one Shopee product URL.
 
     Args:
         page: Reusable Playwright page.
@@ -218,35 +366,42 @@ def scrape_product_reviews(
         if not wait_for_reviews(page):
             return product_reviews
 
-        page_number = 1
-        while len(product_reviews) < max_reviews:
-            logger.info("Mengekstrak halaman ulasan %s", page_number)
-            jeda(1.5, 2.5)
-
-            review_elements = page.query_selector_all(REVIEW_ITEM_SELECTOR)
-            if not review_elements:
-                logger.info("Tidak ada elemen ulasan pada halaman ini")
+        max_reviews_per_rating = ceil(max_reviews / len(RATING_FILTERS))
+        for rating in RATING_FILTERS:
+            if len(product_reviews) >= max_reviews:
                 break
 
-            for review_element in review_elements:
-                if len(product_reviews) >= max_reviews:
-                    logger.info(
-                        "Batas maksimal %s ulasan per produk tercapai", max_reviews
-                    )
-                    break
+            if not select_rating_filter(page, rating):
+                continue
 
-                review = extract_review(review_element, product_url, seen_review_ids)
-                if review is None:
-                    continue
+            remaining_quota = max_reviews - len(product_reviews)
+            rating_quota = min(max_reviews_per_rating, remaining_quota)
+            product_reviews.extend(
+                collect_visible_reviews(
+                    page=page,
+                    product_url=product_url,
+                    seen_review_ids=seen_review_ids,
+                    max_reviews=rating_quota,
+                    rating_filter=rating,
+                )
+            )
 
-                product_reviews.append(review)
-                seen_review_ids.add(review.id_komentar)
+        if not product_reviews:
+            logger.warning(
+                "Filter rating tidak menghasilkan data. Menggunakan daftar ulasan default"
+            )
+            select_all_reviews_filter(page)
+            product_reviews.extend(
+                collect_visible_reviews(
+                    page=page,
+                    product_url=product_url,
+                    seen_review_ids=seen_review_ids,
+                    max_reviews=max_reviews,
+                )
+            )
 
-            logger.info("Terkumpul %s ulasan untuk produk ini", len(product_reviews))
-
-            if len(product_reviews) >= max_reviews or not go_to_next_review_page(page):
-                break
-            page_number += 1
+        rating_counts = pd.Series([review.rating for review in product_reviews]).value_counts()
+        logger.info("Distribusi rating produk ini: %s", rating_counts.to_dict())
 
     except PlaywrightTimeoutError as exc:
         logger.error("Timeout saat memuat produk %s: %s", product_url, exc)
