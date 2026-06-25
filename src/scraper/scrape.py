@@ -43,6 +43,14 @@ AUTHOR_SELECTOR = ":scope > div:nth-child(2) > div:nth-child(1) > a"
 CONTENT_SELECTOR = ":scope > div:nth-child(2) > div:nth-child(2)"
 STAR_SELECTOR = "svg.icon-rating-solid"
 DISABLED_NEXT_CLASS = "shopee-button-no-outline--non-click"
+# Only target the specific Shopee overlay known to block clicks.
+# Broad selectors like div[class*='modal'] will also match
+# essential UI elements (e.g. the review filter section itself).
+OVERLAY_SELECTORS = (
+    "div.wAMdpk",
+    "div.shopee-popup__overlay",
+    "div.shopee-popup__container",
+)
 
 
 @dataclass(frozen=True)
@@ -154,8 +162,51 @@ def wait_for_reviews(page: Page) -> bool:
         return False
 
 
+def dismiss_overlays(page: Page) -> None:
+    """Neutralise Shopee popup overlays that intercept pointer events.
+
+    Only sets ``pointer-events: none`` on targeted overlay elements so
+    they stop blocking clicks.  Does NOT hide elements with
+    ``display: none`` because broad selectors can accidentally match
+    essential page components (e.g. the review filter section).
+
+    Args:
+        page: Active product page.
+    """
+    for selector in OVERLAY_SELECTORS:
+        try:
+            removed = page.evaluate(
+                """(sel) => {
+                    const els = document.querySelectorAll(sel);
+                    let count = 0;
+                    els.forEach(el => {
+                        el.style.pointerEvents = 'none';
+                        count++;
+                    });
+                    return count;
+                }""",
+                selector,
+            )
+            if removed:
+                logger.info("Overlay dinonaktifkan: %s (%s elemen)", selector, removed)
+        except PlaywrightError:
+            pass
+
+    # Press Escape to close any active modal/dialog.
+    try:
+        page.keyboard.press("Escape")
+        jeda(0.3, 0.5)
+    except PlaywrightError:
+        pass
+
+
 def select_review_filter(page: Page, filter_text: str) -> bool:
     """Select a Shopee review filter by visible text.
+
+    Uses JavaScript ``element.click()`` to dispatch a synthetic click
+    directly on the filter DOM node.  This bypasses the browser's
+    pointer hit-testing entirely, so overlays like ``wAMdpk`` cannot
+    intercept the event.
 
     Args:
         page: Product page.
@@ -168,12 +219,16 @@ def select_review_filter(page: Page, filter_text: str) -> bool:
 
     try:
         if filter_button.count() == 0:
-            logger.warning("Filter %s tidak ditemukan", filter_text)
+            logger.warning("Filter '%s' tidak ditemukan", filter_text)
             return False
 
-        filter_button.first.scroll_into_view_if_needed()
-        jeda(0.8, 1.2)
-        filter_button.first.click()
+        filter_button.first.scroll_into_view_if_needed(timeout=10_000)
+        jeda(0.5, 0.8)
+
+        # JavaScript click bypasses overlay hit-testing completely.
+        filter_button.first.evaluate("el => el.click()")
+        logger.info("Filter '%s' berhasil diklik (via JS)", filter_text)
+
         jeda(2.0, 3.0)
         return wait_for_reviews(page)
     except PlaywrightTimeoutError as exc:
@@ -390,17 +445,25 @@ def scrape_product_reviews(
             logger.warning(
                 "Filter rating tidak menghasilkan data. Menggunakan daftar ulasan default"
             )
-            select_all_reviews_filter(page)
-            product_reviews.extend(
-                collect_visible_reviews(
-                    page=page,
-                    product_url=product_url,
-                    seen_review_ids=seen_review_ids,
-                    max_reviews=max_reviews,
+            if select_all_reviews_filter(page):
+                product_reviews.extend(
+                    collect_visible_reviews(
+                        page=page,
+                        product_url=product_url,
+                        seen_review_ids=seen_review_ids,
+                        max_reviews=max_reviews,
+                    )
                 )
-            )
+            else:
+                logger.warning(
+                    "Fallback filter 'Semua' juga gagal untuk %s. "
+                    "Kemungkinan overlay Shopee tidak bisa ditutup.",
+                    product_url,
+                )
 
-        rating_counts = pd.Series([review.rating for review in product_reviews]).value_counts()
+        rating_counts = pd.Series(
+            [review.rating for review in product_reviews]
+        ).value_counts()
         logger.info("Distribusi rating produk ini: %s", rating_counts.to_dict())
 
     except PlaywrightTimeoutError as exc:

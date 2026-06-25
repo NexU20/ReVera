@@ -11,3 +11,8 @@ __pycache__/
 
 # Browser Data
 .browser_data
+
+# User
+test/
+TODO*
+PASS*
