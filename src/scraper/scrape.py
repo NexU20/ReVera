@@ -7,6 +7,7 @@ preprocessing/model/tagging modules.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import asdict, dataclass
 from math import ceil
 from pathlib import Path
@@ -475,26 +476,77 @@ def scrape_product_reviews(
 
 
 def save_reviews(
-    reviews: list[ShopeeReview], output_path: Path = RAW_REVIEWS_FILE
+    reviews: list[ShopeeReview],
+    output_path: Path = RAW_REVIEWS_FILE,
+    *,
+    append: bool = False,
 ) -> None:
     """Save raw reviews to CSV.
 
     Args:
         reviews: Raw Shopee review records.
         output_path: Destination CSV path.
+        append: When True, append to an existing CSV instead of
+            overwriting.  Duplicates are dropped by ``id_komentar``.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    dataframe = pd.DataFrame(asdict(review) for review in reviews)
-    dataframe.to_csv(output_path, index=False, encoding="utf-8")
-    logger.info("%s ulasan berhasil disimpan ke %s", len(reviews), output_path)
+    new_df = pd.DataFrame(asdict(review) for review in reviews)
+
+    if append and output_path.exists():
+        existing_df = pd.read_csv(output_path, dtype={"id_komentar": str})
+        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+        combined_df.drop_duplicates(subset=["id_komentar"], keep="first", inplace=True)
+        combined_df.to_csv(output_path, index=False, encoding="utf-8")
+        added = len(combined_df) - len(existing_df)
+        logger.info(
+            "Mode tambah: %s ulasan baru ditambahkan (total %s) ke %s",
+            added,
+            len(combined_df),
+            output_path,
+        )
+    else:
+        new_df.to_csv(output_path, index=False, encoding="utf-8")
+        logger.info("%s ulasan berhasil disimpan ke %s", len(reviews), output_path)
 
 
-def scrape_reviews() -> int:
+def load_existing_review_ids(output_path: Path = RAW_REVIEWS_FILE) -> set[str]:
+    """Load review IDs already present in the output CSV.
+
+    Args:
+        output_path: Path to the existing raw CSV file.
+
+    Returns:
+        Set of ``id_komentar`` strings from the file, or an empty set
+        when the file does not exist.
+    """
+    if not output_path.exists():
+        return set()
+
+    try:
+        df = pd.read_csv(
+            output_path, usecols=["id_komentar"], dtype={"id_komentar": str}
+        )
+        ids = set(df["id_komentar"].dropna().astype(str))
+        logger.info("Dimuat %s id_komentar dari CSV yang sudah ada", len(ids))
+        return ids
+    except Exception as exc:
+        logger.warning("Gagal memuat CSV yang ada, mulai dari kosong: %s", exc)
+        return set()
+
+
+def scrape_reviews(*, append: bool = False) -> int:
     """Scrape configured Shopee products and write raw review CSV.
+
+    Args:
+        append: When True, add new reviews to the existing CSV file
+            instead of overwriting it.
 
     Returns:
         Process exit code.
     """
+    mode_label = "TAMBAH" if append else "BARU"
+    logger.info("Mode scraping: %s", mode_label)
+
     try:
         product_urls = read_product_urls()
     except FileNotFoundError as exc:
@@ -503,7 +555,9 @@ def scrape_reviews() -> int:
 
     logger.info("Ditemukan %s produk untuk discrape", len(product_urls))
     all_reviews: list[ShopeeReview] = []
-    seen_review_ids: set[str] = set()
+
+    # In append mode, pre-load existing IDs to avoid duplicates.
+    seen_review_ids: set[str] = load_existing_review_ids() if append else set()
 
     with sync_playwright() as playwright:
         context = buka_browser(playwright)
@@ -518,12 +572,23 @@ def scrape_reviews() -> int:
             context.close()
 
     if not all_reviews:
-        logger.warning("Tidak ada ulasan yang berhasil diekstrak")
+        logger.warning("Tidak ada ulasan baru yang berhasil diekstrak")
         return 1
 
-    save_reviews(all_reviews)
+    save_reviews(all_reviews, append=append)
     return 0
 
 
+def _parse_mode() -> bool:
+    """Parse CLI arguments to determine scraping mode.
+
+    Returns:
+        True when ``--add`` flag is present (append mode).
+    """
+    if "--add" in sys.argv:
+        return True
+    return False
+
+
 if __name__ == "__main__":
-    raise SystemExit(scrape_reviews())
+    raise SystemExit(scrape_reviews(append=_parse_mode()))

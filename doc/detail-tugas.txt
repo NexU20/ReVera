@@ -1,0 +1,46 @@
+Tugas Akhir Mata Kuliah: Sains Data 
+
+Program Studi Teknik Informatika — FST UIN Syarif Hidayatullah Jakarta 
+
+📌 Deskripsi Umum: 
+
+Mahasiswa secara berkelompok diminta untuk mengimplementasikan Data Science Pipeline secara utuh (end-to-end) menggunakan Python. Dataset dapat menggunakan data primer (aktivitas/instansi sendiri) maupun data sekunder dari repositori publik (Kaggle, UCI Machine Learning, Data.go.id, dll). 
+
+Target akhir dari tugas ini adalah menghasilkan Aplikasi/Model Prediktif, Laporan Komprehensif, dan Draft Artikel Ilmiah yang siap disubmit ke jurnal nasional. 
+
+✅ Capaian Pembelajaran (Course Learning Outcomes): 
+
+Mampu melakukan eksplorasi, penapisan, dan pra-pemrosesan data menggunakan library Pandas dan NumPy. 
+Mampu menyajikan visualisasi data yang informatif menggunakan Matplotlib atau Seaborn. 
+Mampu membangun, mengevaluasi, dan menyimpan model prediksi menggunakan Scikit-Learn. 
+Mampu mengimplementasikan logika pemrograman Python tingkat lanjut (clean code, function, exception handling, dan File I/O/Model Persistence). 
+Mampu menyusun dan menyajikan laporan serta artikel ilmiah yang sistematis sesuai kaidah akademis. 
+🧩 Langkah-Langkah Pengerjaan Tugas: 
+
+1. Pemilihan & Pemahaman Dataset 
+
+Setiap kelompok memilih 1 dataset dengan kriteria minimal 500 entri (baris) dan 6 fitur (kolom). Wajib mencantumkan sumber data secara jelas. 
+Lakukan Data Profiling: Tampilkan informasi umum dataset (jumlah data, tipe data setiap kolom, dan statistik deskriptif). 
+2. Exploratory Data Analysis (EDA) & Visualisasi Data 
+
+Hitung dan analisis matriks korelasi antar-fitur (df.corr()) untuk mengidentifikasi fitur prediktor yang potensial. 
+Buat minimal 3 visualisasi data yang relevan (misalnya: Histogram untuk distribusi, Boxplot untuk deteksi outlier, Scatter Plot untuk korelasi, atau Heatmap untuk matriks korelasi). 
+
+3. Pra-pemrosesan Data (Data Preprocessing) 
+Tangani missing values (imputasi atau drop dengan argumen yang logis). 
+Tangani outliers berdasarkan hasil visualisasi sebelumnya. 
+Lakukan Feature Encoding (seperti One-Hot Encoding atau Label Encoding) untuk fitur kategorikal. 
+Terapkan Exception Handling (try-except) pada fungsi pemrosesan data untuk memastikan kode berjalan robust. 
+
+4. Pemodelan Prediktif & Evaluasi 
+Bagi dataset menjadi Training Set dan Testing Set (misal dengan rasio 80:20 atau 70:30). 
+Bangun model Machine Learning menggunakan Scikit-Learn (Contoh: KNN, Decision Tree, Naïve Bayes, atau Linear/Logistic Regression). 
+Evaluasi Model: 
+Kasus Regresi: Hitung nilai Root Mean Squared Error (RMSE) dan R2 Score. 
+Kasus Klasifikasi: Tampilkan Confusion Matrix, skor Accuracy, dan F1-Score. 
+Simpan model terbaik yang telah dilatih ke dalam file .pkl atau .joblib menggunakan teknik File I/O. 
+
+5. Pelaporan, Presentasi, & Luaran Publikasi 
+Laporan: Dikumpulkan dalam bentuk Jupyter Notebook (.ipynb) yang bersih dan rapi (dilengkapi narasi menggunakan Markdown) beserta versi cetak PDF. 
+Presentasi: Setiap kelompok mempresentasikan hasilnya secara lisan selama 5–10 menit. 
+Artikel Ilmiah: Menyusun naskah jurnal sesuai dengan template target jurnal nasional (SINTA) atau jurnal internal kampus (misal: JTI (Jurnal Teknik Informatika) UIN Jakarta).
