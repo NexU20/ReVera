@@ -1,0 +1,421 @@
+Jurnal TEKNO KOMPAK, Vol. 18,  No. 1,  P-ISSN: 1412-9663, E-ISSN : 2656-3525, Hal. 178-192 
+ 
+ 
+ 
+178 
+ 
+Perbandingan Algoritma Klasifikasi Support Vector Machine, 
+Random Forest dan Logistic Regression Pada Ulasan Shopee 
+Asep Saepudin1*, Ahmad Faqih2, Gifthera Dwilestari3 
+1,2 Teknik Informatika, STMIK IKMI CIREBON, Cirebon, Indonesia 
+3 Sistem Informasi, STMIK IKMI CIREBON, Cirebon, Indonesia 
+Email: 1* saepudinasep2001@gmail.com, 2ahmadfaqih367@gmail.com, 3ggdwilestari@gmail.com 
+Abstrak− Dengan kemajuan teknologi, penggunaan internet semakin meluas di Indonesia dan turut mendorong 
+perkembangan e-commerce. Namun, masih terdapat beberapa permasalahan yang perlu diselesaikan, salah satunya adalah 
+kurangnya kepercayaan konsumen terhadap platform e-commerce. Oleh karena itu, penelitian tentang platform e-commerce 
+seperti Shopee perlu dilakukan untuk memahami arah sentimen pengguna. Analisis sentimen digunakan untuk 
+mengklasifikasikan sentimen ulasan pengguna Shopee. Penelitian ini bertujuan untuk membandingkan performa algoritma 
+klasifikasi berdasarkan proses data mining menggunakan CRISP-DM. Algoritma klasifikasi yang digunakan adalah Support 
+Vector Machine (SVM), Random Forest, dan Logistic Regression. Pengujian menggunakan 3.000 data, dengan 90% data 
+training dan 10% data testing. Hasil pelabelan data menunjukkan bahwa sentimen positif berjumlah 307, sentimen netral 
+2.537, dan sentimen negatif 156. Hasil pengujian akurasi menggunakan confusion matrix menunjukkan bahwa algoritma 
+Random Forest memiliki akurasi tertinggi sebesar 94%, diikuti oleh Support Vector Machine (SVM) sebesar 91%, dan Logistic 
+Regression sebesar 86%. Penelitian ini berhasil mendapatkan algoritma yang efektif dan terbaik dalam mengklasifikasikan 
+sentimen ulasan positif, sentimen ulasan netral, dan sentimen ulasan negatif terkait dengan aplikasi Shopee. Hasil dari 
+algoritma terbaik tersebut akan diintegrasikan dalam antarmuka web menggunakan bahasa pemrograman PHP dan Python, 
+untuk mengetahui arah sentimen yang akan dimasukan di masa mendatang. 
+Kata Kunci: e-commerce, sentimen pengguna, analisis sentimen, algoritma klasifikasi, shopee. 
+Abstract− With advances in technology, internet use is increasingly widespread in Indonesia and has contributed to the 
+development of e-commerce. However, there are still several problems that need to be resolved, one of which is the lack of 
+consumer trust in e-commerce platforms. Therefore, research on e-commerce platforms such as Shopee needs to be carried out 
+to understand the direction of user sentiment. Sentiment analysis is used to classify the sentiment of Shopee user reviews. This 
+research aims to compare the performance of classification algorithms based on data mining processes using CRISP-DM. The 
+classification algorithms used are Support Vector Machine (SVM), Random Forest, and Logistic Regression. Testing uses 
+3,000 data, with 90% training data and 10% testing data. The data labeling results show that there are 307 positive sentiments, 
+2,537 neutral sentiments, and 156 negative sentiments. The results of accuracy testing using the confusion matrix show that 
+the Random Forest algorithm has the highest accuracy at 94%, followed by Support Vector Machine (SVM) at 91%, and 
+Logistic Regression is 86%. This research succeeded in obtaining an effective and best algorithm in classifying positive review 
+sentiment, neutral review sentiment, and negative review sentiment related to the Shopee application. The results of the best 
+algorithm will be integrated into a web interface using the PHP and Python programming languages, to determine the direction 
+of sentiment that will be entered in the future. 
+Keywords: e-commerce, user sentiment, sentiment analysis, classification algorithms, shopee. 
+1. PENDAHULUAN 
+ 
+ 
+Seiring dengan kemajuan teknologi, pengguna internet semakin meluas di Indonesia, yang 
+mempengaruhi perkembangan e-commerce. Hal ini disebabkan karena sebagian besar orang memiliki mobilitas 
+yang tinggi dalam kegiatan sehari-harinya [1]. Menurut data dari Asosiasi Penyelenggara Jasa Internet Indonesia 
+(APJII), jumlah pengguna internet di Indonesia mencapai 213 juta orang per Januari 2023 dan diperkirakan akan 
+terus meningkat pada tahun-tahun mendatang. Hal ini memberikan potensi besar bagi pengembangan e-commerce 
+di Indonesia. Semakin banyak pelaku ekonomi, baik perusahaan besar maupun kecil, yang beralih ke bisnis digital 
+dalam bentuk e-commerce. [2]. Namun, untuk memanfaatkan potensi ini, perlu adanya upaya untuk meningkatkan 
+kepercayaan konsumen terhadap platform e-commerce serta mengetahui arah sentimen pengguna terhadap produk 
+atau layanan yang ditawarkan [2]. 
+ 
+ 
+Shopee saat ini menjadi platform belanja dan jual beli paling banyak dikunjungi di Indonesia. Rata-rata 
+pengunjung bulanannya mencapai 216 juta pada kuartal ketiga tahun 2023. Shopee dapat diunduh dari Google 
+Play Store, yang menyediakan berbagai fitur penilaian dan ulasan [3]. Salah satu fitur yang tersedia adalah fitur 
+rating dan ulasan, yang memungkinkan pengguna untuk berbagi pendapat mereka tentang produk yang telah 
+mereka beli [4]. Review dari pengguna sebelumnya menjadi sumber informasi yang semakin penting untuk 
+menilai kualitas produk dan layanan. Banyak pengguna internet yang mengandalkan rekomendasi dan pendapat 
+pengguna sebelumnya dalam membuat keputusan pembelian [3]. 
+ 
+ 
+Bagian dari data mining, disebut juga analisis sentimen atau opinion mining, yang sering digunakan 
+untuk menganalisis teks untuk mendapatkan opini yang terpolarisasi dan kemudian mengubah data tersebut 
+Jurnal TEKNO KOMPAK, Vol. 18,  No. 1,  P-ISSN: 1412-9663, E-ISSN : 2656-3525, Hal. 178-192 
+ 
+ 
+ 
+179 
+ 
+menjadi informasi yang bernilai positif, negatif, atau netral [5]. Tugas dasar analisis sentimen adalah dengan 
+mengumpulkan data atau teks yang ada menjadi sebuah kalimat atau dokumen, yang kemudian mengkategorikan 
+kalimat atau dokumen tadi menjadi bentuk positif, negatif atau netral [5]. 
+ 
+ 
+Sebelumnya, telah dilakukan penelitian mengenai perbandingan kinerja algoritma Naive Bayes, K-
+Nearest Neighbors, dan Random Forest untuk klasifikasi sentimen terhadap BPJS kesehatan di Twitter. Hasil 
+penelitian menunjukkan bahwa algoritma Random Forest memiliki akurasi tertinggi, yaitu 86%, diikuti oleh Naive 
+Bayes dengan akurasi 80%, dan K-Nearest Neighbors dengan akurasi 67%[6]. 
+ 
+ 
+Topik ini sangat menarik untuk dibahas, sehingga banyak penelitian yang dilakukan di bidang analisis 
+sentimen. Salah satu penelitian tersebut mempelajari analisis sentimen ulasan meetings cloud Zoom di Play Store 
+menggunakan dua algoritma, yaitu Naive Bayes dan Support Vector Machine. Pada penelitiannya didapatkan 
+bahwa tingkat akurasi yang didapatkan algoritma Support Vector Machine lebih unggul 6,85% dibandingkan 
+algoritma Naive Bayes dengan 1007 record dataset [7]. Penelitian lainnya tentang analisis sentimen opini 
+masyarakat terkait penyelenggaraan sistem elektronik menggunakan metode Logistic Regression. Hasil penelitian 
+tersebut menunjukkan bahwa analisis sentimen menggunakan algoritma Logistic Regression mencapai akurasi 
+sebesar 79,07% pada dataset opini masyarakat terhadap kebijakan Operasi Sistem Elektronik (PSE). Dengan 
+sebaran sentimen pada dataset adalah 126 sentimen negatif, 657 sentimen netral, dan 291 sentimen positif [8]. 
+ 
+Berdasarkan penelitian sebelumnya, penelitian ini menggunakan tiga algoritma, yaitu Support Vector 
+Machine, Random Forest, dan Logistic Regression, untuk melakukan analisis sentimen. Algoritma ini umum dan 
+dapat digunakan untuk mengklasifikasi data opini Google Playstore. Proses ini akan memberikan label kelas untuk 
+opini positif, netral, atau negatif [3]. Algoritma tersebut akan dibandingkan dan dievaluasi menggunakan 
+confusion matrix. Temuan penelitian ini diharapkan dapat memberikan hasil klasifikasi yang akurat dan informasi 
+yang bermanfaat bagi pihak yang memerlukan. 
+2. METODE PENELITIAN 
+2.1 CRISP-DM 
+Penelitian klasifikasi ulasan pengguna shopee disesuaikan dengan tahapan metode CRISP-DM dengan diagram 
+alir yang telah dibuat agar penelitian yang dilakukan dapat lebih terstruktur dan hasil yang didapatkan dapat lebih 
+akurat dan maksimal. Diagram alir yang digunakan oleh peneliti dapat dilihat pada Gambar 1. 
+Cross-Industry Standard Process for Data Mining
+Business Understanding :
+Perusahaan Shopee dapat 
+memahami sentimen 
+pelanggan terkait dengan 
+produk dan layanan 
+mereka.
+Data Understanding :
+ Sumber Data (Google 
+Play Store)
+ Pembersihan Data 
+(Duplicate & Missing 
+Value)
+ Tipe Data (Object, 
+int64 & datetime)
+ Jumlah data (3000 
+ulasan)
+Evaluasi :
+ Confusion Matrix
+ Accuracy, Precision, 
+Recall & F1-Score
+Deployment :
+ Klasifikasi sentimen 
+ulasan pengguna 
+Shopee
+Data Preparation :
+Pelabelan :
+ Textblob
+Pre-Processing :
+ Tokenizing
+ 
+Stopword
+ 
+Case Folding
+ 
+Remove Punctuation
+ 
+Stemming
+TF-IDF
+Modelling :
+Split Data
+Data Latih (90%)
+Data Uji (10%)
+Algoritma Klasifikasi
+Support Vector 
+Machine
+Random Forest
+Logistic 
+Regression
+ 
+    Gambar 1. Tahapan Penelitian sesuai CRISP-DM 
+a.Business Understanding 
+Dalam tahap ini, tujuan dan kebutuhan penelitian secara rinci diidentifikasi. Selanjutnya, tujuan dan batasan 
+tersebut diterjemahkan menjadi rumusan permasalahan data mining. Proses ini melibatkan pemahaman mendalam 
+terhadap objek penelitian guna menghasilkan hasil yang sesuai dengan harapan. Pemahaman terhadap objek 
+penelitian dapat diperoleh dengan mencari dan menggali informasi dari berbagai sumber yang terkait dengan 
+objek tersebut. 
+b.Data Understanding 
+Jurnal TEKNO KOMPAK, Vol. 18,  No. 1,  P-ISSN: 1412-9663, E-ISSN : 2656-3525, Hal. 178-192 
+ 
+ 
+ 
+180 
+ 
+Proses yang dilakukan pada tahap ini adalah pengambilan data mentah dari Google Play Store yang dikumpulkan 
+dengan teknik web scraping menggunakan pemrograman python pada tanggal 24 Oktober 2023. Setelah data 
+diperoleh, dilakukan proses pembersihan data untuk mengatasi missing value dan duplicate data. Setelah 
+melakukan pembersihan data, dilakukan eksplorasi data untuk memahami struktur data. Eksplorasi ini melibatkan 
+analisis statistik deskriptif dan visualisasi data guna mendapatkan wawasan awal mengenai karakteristik dataset 
+yang akan digunakan dalam analisis lebih lanjut. 
+c.Data Preparation 
+Dalam tahap data preparation ada 3 tahapan yaitu pelabelan data, preprocessing dan pembobotan kata. 
+1.Pelabelan Data 
+Teks diklasifikasikan secara otomatis menggunakan textblob. Textblob menghitung nilai polarity dan subjectivity 
+untuk menentukan kelas teks. Polarity menunjukkan emosi teks, sedangkan subjectivity menunjukkan jenis 
+teks[9]. Teks dengan subjectivity tinggi adalah opini, sedangkan teks dengan polarity tinggi adalah positif[9]. Dari 
+nilai polarity, teks diklasifikasikan menjadi positif, negatif, atau netral. 
+1.Preprocessing 
+Berikut ini merupakan bentuk preprocessing yang dilakukan yaitu : 
+ 
+Tokenizing: Tahap ini adalah proses untuk membagi kalimat menjadi unit-unit terkecil yang disebut 
+token. Token dapat berupa kata, frasa, atau elemen makna lainnya[10]. Pada penelitian ini, proses 
+tokenisasi dapat dilakukan dengan menggunakan library nltk.tokenize untuk membagi kata menjadi 
+kumpulan huruf. 
+ 
+Stopword: Proses ini bertujuan untuk menghilangkan kata-kata yang sering digunakan dan tidak memiliki 
+arti penting dalam sebuah kalimat. Hal ini dilakukan agar data dapat diproses lebih efisien pada tahap 
+selanjutnya[10]. Dalam penelitian ini, stopword dihilangkan dengan menggunakan daftar stopword yang 
+tersedia dalam library nltk.corpus. 
+ 
+Case Folding: Pada tahap ini, kata-kata diubah menjadi bentuk yang sama dengan mengubah semua kata 
+menjadi huruf kecil[10]. 
+ 
+Remove Punctuation: Tahap ini adalah proses untuk menghilangkan karakter yang tidak diperlukan, 
+seperti simbol, angka, dan tanda baca. Hal ini dilakukan karena ulasan pengguna Google Play Store 
+biasanya berisi simbol, angka, dan tanda baca yang tidak diperlukan untuk proses klasifikasi[10]. Proses 
+ini dilakukan dengan menggunakan sintaks ekspresi reguler pada Python. 
+ 
+Stemming: Tahap ini adalah proses mengubah kata berimbuhan menjadi kata dasar dengan cara 
+membuang imbuhannya[10]. Penelitian ini menggunakan pustaka Python Sastrawi untuk melakukan 
+proses tersebut. 
+ 
+2.Pembobotan Kata 
+ 
+Term Frequency 
+Proses ini menghitung berapa kali sebuah kata muncul dalam sebuah kumpulan data.[4]. Frekuensi 
+kemunculan kata dapat dihitung dengan menggunakan persamaan berikut. 
+𝑇𝐹 (𝑡, 𝑑) = 
+𝑗𝑢𝑚𝑙𝑎ℎ 𝑘𝑒𝑚𝑢𝑛𝑐𝑢𝑙𝑎𝑛 𝑘𝑎𝑡𝑎 𝑑𝑎𝑙𝑎𝑚 𝑑𝑜𝑘𝑢𝑚𝑒𝑛
+𝑡𝑜𝑡𝑎𝑙 𝑘𝑎𝑡𝑎 𝑑𝑎𝑙𝑎𝑚 𝑑𝑜𝑘𝑢𝑚𝑒𝑛
+ 
+ 
+(1) 
+ 
+Inverse Document Frequency 
+Proses ini menghitung jumlah dokumen yang mengandung kata kunci yang dicari [4]. Perhitungan 
+jumlah dokumen yang mengandung kata kunci dapat dilakukan dengan menggunakan persamaan berikut. 
+𝐼𝐷𝐹 (𝑡, 𝐷) = log (
+𝑁
+𝑑𝑓+ 1) 
+ 
+ 
+ 
+(2) 
+Keterangan : 
+N = jumlah semua dokumen 
+df = jumlah kata pada dokumen 
+a. Modelling 
+Sebelum melakukan pemodelan data, terlebih dahulu dilakukan pembagian data dengan data training 
+sebesar 90% dan data testing sebesar 10%. Setelah itu, data training dilakukan modeling dengan 
+algoritma klasifikasi Support Vector Machine, Random Forest dan Logistic Regression. Dan data uji 
+dilakukan proses klasifikasi menggunakan algoritma yang telah dilakukan modeling tersebut. 
+b. Evaluation 
+Jurnal TEKNO KOMPAK, Vol. 18,  No. 1,  P-ISSN: 1412-9663, E-ISSN : 2656-3525, Hal. 178-192 
+ 
+ 
+ 
+181 
+ 
+Ttahap ini adalah tahap uji model menggunakan confusion matrix. Confusion matrix adalah matriks 
+berukuran 3x3 yang digunakan untuk mengevaluasi kinerja model dengan data training dan data testing[4]. 
+Confusion matrix dapat menghasilkan nilai accuracy, recall, precision, dan f1-score. Nilai-nilai ini dapat 
+dihitung dan ditampilkan dalam bentuk persentase[4]. Tabel confusion matrix dapat dilihat sebagai berikut :  
+Tabel 1. Confusion Matrix 
+Data Aktual 
+Data Prediksi 
+Positif 
+Netral 
+Negatif 
+Positif 
+True Positif 
+False Netral 
+False Nagetif 
+Netral 
+False Positif 
+True Netral 
+False Negatif 
+Negatif 
+False Positif 
+False Netral 
+True Negatif 
+ 
+𝐴𝑐𝑐𝑢𝑟𝑎𝑐𝑦= 
+𝑇𝑃+𝑇𝑁+𝑇𝑁𝑒
+𝑇𝑃+𝐹𝑁+𝐹𝑁𝑒+𝐹𝑃+𝑇𝑁+𝑇𝑁𝑒 
+ 
+ 
+ 
+ 
+(3) 
+Keterangan : 
+TP  
+= True Positif 
+FP  
+= False Positif 
+FN  
+= False Negatif TN  
+= True Negatif 
+FNe  
+= False Netral 
+TNe  
+= True Netral 
+c. 
+Deployment 
+Tahap terakhir dari CRISP-DM adalah tahap diseminasi hasil. Hasil yang diperoleh dari proses data mining 
+perlu diorganisir dan disajikan dengan cara yang mudah dipahami oleh pengguna. 
+2.2 Support Vector Machine 
+Support vector machine (SVM) adalah metode pembelajaran terbimbing yang digunakan untuk klasifikasi dan 
+analisis data [3]. SVM adalah algoritma klasifikasi yang populer dan dapat digunakan untuk mengklasifikasikan 
+data ke dalam dua atau lebih kelas. SVM menggunakan teknik kernel untuk memetakan data ke dalam ruang 
+berdimensi tinggi, sehingga dapat menangani masalah klasifikasi non-linear [3]. Rumus untuk perhitungan SVM 
+menggunakan persamaan (4) : 
+(w. xi) + b = 0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(4) 
+Data xi yang termasuk pada kelas -1 dapat direpresentasikan dengan persamaan (5). 
+(w. xi+b) ≤ yi = -1 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(5) 
+Untuk data xi yang termasuk pada kelas +1, rumusnya dapat dilihat pada persamaan (6). 
+(w. xi+b) ≥ yi=1  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(6) 
+2.3 Random Forest 
+Random Forest adalah algoritma yang dapat digunakan untuk klasifikasi dan regresi. Random Forest terdiri dari 
+banyak pohon keputusan yang dilatih secara independen. Hasil klasifikasi ditentukan oleh suara terbanyak dari 
+pohon-pohon tersebut. Random Forest menghasilkan hasil yang kompetitif dengan algoritma lain, tetapi tidak 
+mengubah data pelatihan secara progresif. Akurasi yang ditunjukkan oleh Random Forest adalah untuk 
+mengurangi bias[11]. 
+𝐺𝑖𝑛𝑖= 𝑁𝐿∑
+𝑃𝑘𝐿
+𝑘
+ (1 −𝑃𝑘𝐿) + 𝑁𝑅∑
+𝑃𝑘𝑅
+𝑘
+ (1 −𝑃𝑘𝑅) 
+ 
+ 
+ 
+(7) 
+Random Forest menggunakan indeks Gini untuk memilih atribut yang paling memisahkan data berdasarkan 
+kelasnya[11]. Indeks Gini mengukur kemungkinan kesalahan klasifikasi, dan nilainya akan semakin kecil jika 
+data lebih tersegmentasi. Indeks Gini dapat dihitung menggunakan persamaan (7), di mana k mewakili kategori 
+kejadian, PkL mewakili proporsi kelas k di simpul kiri, dan PkR mewakili proporsi kelas k di simpul kanan[11]. 
+2.4 Logistic Regression 
+Logistic regression adalah suatu metode statistik yang efektif dalam menganalisis data multivariat dan dalam 
+memodelkan variabel biner. Dalam analisis multivariat, Logistic Regression memungkinkan peneliti untuk 
+memperkirakan koefisien pada setiap prediktor yang dimasukkan dalam model akhir. Lebih lanjut, metode ini 
+Jurnal TEKNO KOMPAK, Vol. 18,  No. 1,  P-ISSN: 1412-9663, E-ISSN : 2656-3525, Hal. 178-192 
+ 
+ 
+ 
+182 
+ 
+memungkinkan penyesuaian prediktor satu sama lain, sehingga memungkinkan penentuan pengaruh relatif 
+masing – masing prediktor terhadap variabel respon[5]. 
+Dalam kontek analisis sentimen, Logistic Regression digunakan untuk memahami bagaimana berbagai fitur atau 
+variabel independen (seperti kata – kata kunci atau fitur-fitur dalam ulasan) dapat memengaruhi kecenderungan 
+ulasan untuk menjadi positif, negatif, atau netral. Melalui estimasi koefisien, Logistic Regression membantu 
+mengukur sejauh mana setiap prediktor memengaruhi probabilitas ulasan termasuk dalam kategori sentimen 
+tertentu. 
+Logistic regression memiliki fungsi dalam menentukan beberapa fungsi linier yang dapat dinyatakan sebagai 
+berikut[5]: 
+𝐿𝑜𝑔𝑖𝑡 (𝑃) = 𝛽0 + 𝛽1𝑋1 + 𝛽2𝑋2 … … … 𝛽𝑘𝑋𝑘 
+ 
+ 
+ 
+ 
+(8) 
+P  
+ 
+= probabilitas fitur 
+X1, X2, … Xk  = nilai prediktor 
+ 𝛽1, 𝛽2, … … 𝛽𝑘 = intersepsi model 
+3. HASIL DAN PEMBAHASAN 
+3.1 Hasil 
+3.1.1 Business Understanding 
+Pemahaman bisnis pada kasus perbandingan algoritma klasifikasi pada sentimen ulasan pengguna Shopee adalah 
+sebagai berikut: 
+a. 
+Perusahaan Shopee dapat memahami sentimen pelanggan terkait dengan produk dan layanan mereka. 
+b. Menggunakan algoritma klasifikasi untuk mengkategorikan ulasan pengguna sebagai positif, negatif, 
+atau netral. 
+c. 
+Meningkatkan pemahaman Shopee terhadap sentimen pelanggan, memungkinkan perbaikan layanan dan 
+produk, serta pengambilan keputusan berdasarkan ulasan pelanggan. 
+3.1.2 Data Understanding 
+Data yang dikumpulkan dari Google Playstore menggunakan teknik web scrapping didapatkan dengan atribut 
+sebagai berikut. 
+Tabel 2. Atribut Dataset 
+Atribut 
+Deskripsi 
+reviewId 
+Id Ulasan 
+userName 
+Nama Pengguna 
+userImage 
+Photo Pengguna 
+Content 
+Ulasan Pengguna 
+Score 
+Nilai Ulasan 
+thumbsUpCount 
+Parameter Jumlah Suka 
+reviewCreatedVersion 
+Ulasan Versi Aplikasi 
+At 
+Tanggal Dibuatnya Ulasan 
+replyContent 
+Umpan Balik/Balasan Ulasan 
+repliedAt 
+Tanggal Umpan Balik/Balasan Ulasan 
+appVersion 
+Versi Aplikasi 
+Selanjutnya, data tersebut dilakukan pengecekan missing value dan duplicate dengan hasil dari pengecekan 
+tersebut tidak didapatkan duplicate data dan Hasilnya terdapat 977 missing value pada atribut replyContent dan 
+repliedAt. Maka untuk mengatasi hal tersebut peneliti melakukan pengisian data pada nilai yang kosong dengan 
+"0" dan dengan kode pada Gambar 2. 

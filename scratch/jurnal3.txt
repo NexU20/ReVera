@@ -1,0 +1,649 @@
+DOI: 10.14421/ijid.2025.5073                                                 IJID (International Journal on Informatics for Development), e-ISSN: 2549-7448 
+ 
+Vol. 14, No. 2, December 2025, Pp. 640-658  
+ 
+ 
+Sentiment Analysis on Shopee Xpress Delivery 
+Time Reviews Using Support Vector Machine and 
+Logistic Regression 
+ 
+ 
+Sewin Fathurrohman 
+Department of Information Systems 
+Universitas Gunadarma 
+Depok, Indonesia 
+sewin.fathur@gmail.com 
+ 
+Irma Wahyuningtyas 
+Department of Mathematics Education 
+Universitas Muhammadiyah Prof. Dr. Hamka 
+Jakarta, Indonesia 
+3melatiputih@gmail.com 
+ 
+Irfan Ricky Afandi 
+Department of Informatics Engineering 
+Universitas Muhammadiyah Prof. Dr. Hamka 
+Jakarta, Indonesia 
+richky99@gmail.com 
+ 
+Azis Styo Nugroho 
+Department of Automation Engineering Technology 
+Universitas Negeri Jakarta 
+Jakarta, Indonesia 
+fled0211@gmail.com 
+ 
+Firman Noor Hasan 
+Department of Informatics Engineering 
+Universitas Muhammadiyah Prof. Dr. Hamka 
+Jakarta, Indonesia 
+firman.noorhasan@uhamka.ac.id
+ 
+ 
+Article History 
+Received March 12th, 2025  
+Revised May 17th, 2025 
+Accepted May 21st, 2025 
+Published January 2026
+ 
+Abstract—This study examines user sentiment towards Shopee Xpress delivery times using machine learning techniques. We collected 
+497 reviews from platforms like X and the Google Play Store, leveraging the valuable feedback despite its unstructured and informal 
+nature. After labelling 398 reviews for model training and reserving 99 for sentiment prediction, we implemented two classification 
+algorithms: Support Vector Machine (SVM) and Logistic Regression. These models categorised sentiments into negative, neutral, 
+and positive classes. Despite class imbalance in the training data, SVM outperformed Logistic Regression with an accuracy of 93%, 
+demonstrating a more balanced performance across sentiment categories compared to Logistic Regression's 90% accuracy. Both 
+models showed consistent sentiment prediction on new data. Our findings highlight the potential of sentiment analysis as a valuable 
+tool for Shopee Xpress to understand customer perceptions and improve delivery experiences. By providing actionable insights, this 
+study can inform logistics improvements and enhance customer satisfaction. Future research could benefit from collaborating with 
+Shopee to access internal data and integrating additional data sources for more comprehensive insights, ultimately driving business 
+growth and customer loyalty. This study contributes to the growing body of research on sentiment analysis in logistics and e-
+commerce. 
+Keywords—classification algorithms; customer satisfaction; machine learning; sentiment prediction; user sentiment 
+IJID (International Journal on Informatics for Development), e-ISSN: 2549-7448 
+Vol. 14, No. 2, December 2025, Pp. 640-658  
+ 
+This article is distributed under the terms of the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
+See for details: https://creativecommons.org/licenses/by-nc-nd/4.0/ 
+641 
+1 INTRODUCTION 
+The growth of e-commerce in Indonesia has accelerated 
+significantly in recent years, driven by the widespread 
+adoption of digital technologies and shifts in consumer 
+shopping behaviour [1]. With increasing competition among 
+e-commerce platforms, logistics performance, particularly 
+the speed and reliability of delivery, has become a key 
+determinant of customer satisfaction and loyalty [2]. As a 
+result, companies continue to innovate to meet user 
+expectations by providing faster and more efficient delivery 
+services [3]. 
+Shopee, one of Indonesia's most prominent e-commerce 
+platforms, has adopted a strategic approach to delivery by 
+establishing its own logistics service: Shopee Xpress (SPX) 
+[4]. This in-house logistics network is designed to enhance 
+operational control and accelerate delivery times, improving 
+the overall customer experience [5]. SPX plays a vital role in 
+ensuring that products are delivered on time, essential for 
+maintaining customer trust and platform competitiveness. 
+In the digital economy, user-generated reviews on app 
+marketplaces or social media have become an important 
+source of insight into customer satisfaction [6]. Customers 
+often use platforms like the Google Play Store and X 
+(formerly Twitter) to express their opinions about delivery 
+speed, courier behaviour, and overall satisfaction [7]. 
+However, these reviews are typically written in unstructured, 
+informal language, making them difficult to analyse using 
+conventional methods [8]. For logistics providers like Shopee 
+Xpress, analysing such feedback, particularly sentiments 
+related to delivery time, is essential for identifying areas for 
+service improvement and gaining a competitive advantage 
+[9]. 
+One effective approach for analysing unstructured textual 
+data is sentiment analysis, which uses natural language 
+processing (NLP) and machine learning techniques to classify 
+user opinions into sentiment categories such as positive, 
+negative, or neutral [10]. In logistics, sentiment analysis 
+enables companies to track delivery-related complaints or 
+satisfaction trends and translate them into actionable insights 
+for business improvement [11]. 
+Despite the growing interest in sentiment analysis, 
+relatively few studies have focused on evaluating user 
+sentiment related to delivery time. Many existing works 
+assess general service satisfaction without isolating the 
+delivery experience as a separate dimension. Customer 
+reviews often contain sentiments directed toward specific 
+aspects, such as delivery punctuality or courier service, which 
+are critical components of logistics performance but are 
+frequently overlooked in generalised sentiment models. 
+Previous studies have applied machine learning models 
+such as the Support Vector Machine (SVM) and Logistic 
+Regression to classify sentiments in various domains. For 
+instance, SVM has been used to analyse customer feedback 
+on the MyPertamina application, achieving 85.31% 
+classification accuracy between positive and negative 
+sentiments 
+[12]. 
+Another 
+study 
+employed 
+Logistic 
+Regression to evaluate user reviews of online transportation 
+services, yielding 85% accuracy across three sentiment 
+categories [13]. However, these studies did not specifically 
+examine delivery time sentiments, nor did they utilise 
+multiple data sources for a broader sentiment perspective. 
+This research adopts both SVM and Logistic Regression 
+as classification models due to their complementary strengths 
+in sentiment analysis tasks. SVM is well-suited for handling 
+high-dimensional and sparse textual data by constructing an 
+optimal separating hyperplane in a transformed feature space 
+[14]. This makes SVM particularly effective for managing 
+noisy user reviews, such as those concerning delivery delays 
+or courier experiences [15]. Nevertheless, SVM can be 
+sensitive 
+to 
+redundant 
+features 
+and 
+may 
+become 
+computationally expensive for large datasets [16]. In contrast, 
+Logistic Regression provides a more interpretable and 
+probabilistic approach, especially with techniques like TF-
+IDF for feature extraction [17]. Its simplicity allows for 
+efficient sentiment classification even in smaller datasets; 
+however, it may underperform in high-dimensional scenarios 
+without proper regularisation [18]. By leveraging both 
+models, this study aims to conduct a comparative evaluation 
+of their effectiveness in identifying delivery-related 
+sentiments within Shopee Xpress reviews. 
+The novelty of this research lies in its focused analysis of 
+sentiment toward delivery time, an important but often 
+underexplored dimension in logistics-related sentiment 
+studies. In addition, this study combines data from two 
+distinct platforms, Google Play Store and X, enabling the 
+extraction of structured and spontaneous user feedback. By 
+comparing the performance of two well-established machine 
+learning algorithms, this research identifies the most effective 
+approach for analysing delivery-related sentiment. The 
+findings are expected to provide actionable insights for 
+Shopee Xpress and other logistics service providers to 
+optimise delivery performance and enhance customer 
+satisfaction through data-driven strategies. 
+ 
+2 METHOD 
+This section provides an overview of the methodology 
+applied in this study. The research used Google Colab and 
+Python as the primary computational tools. Google Colab was 
+chosen due to its accessibility, support for cloud-based GPU 
+acceleration, and compatibility with a wide range of data 
+mining libraries [19]. These features allow efficient data 
+processing and model training without requiring extensive 
+local computational resources [20]. 
+The methodology employed in this study follows a 
+structured workflow to ensure the robustness and 
+reproducibility of sentiment analysis. As illustrated in Fig. 1, 
+the research process contains several key stages. Each stage 
+plays a crucial role in ensuring the accuracy and reliability of 
+the sentiment classification results. 
+ 
+IJID (International Journal on Informatics for Development), e-ISSN: 2549-7448 
+Vol. 14, No. 2, December 2025, Pp. 640-658  
+ 
+This article is distributed under the terms of the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
+See for details: https://creativecommons.org/licenses/by-nc-nd/4.0/ 
+642 
+ 
+Figure 1.  Workflow diagram of the research 
+ 
+The research methodology follows a structured workflow, 
+as illustrated in Fig. 1, which consists of seven main stages: 
+1. Data Collection: Customer reviews related to Shopee 
+Xpress were gathered from X and the Google Play Store 
+using web scraping techniques. 
+2. Data Transformation: The collected datasets were pre-
+processed for consistency, including attribute selection 
+and format standardisation. 
+3. Data Labelling: The researcher assigned sentiment 
+annotations (positive, negative, neutral) to a subset of the 
+dataset. 
+4. Data Pre-processing: Several text pre-processing 
+techniques, 
+such 
+as 
+cleansing, 
+case 
+folding, 
+normalisation, tokenisation, stopword removal, and 
+stemming, were applied to refine the textual data. 
+5. Algorithm 
+Implementation: 
+The 
+dataset 
+was 
+transformed into numerical representations using TF-
+IDF before being processed by machine learning models, 
+namely Support Vector Machine (SVM) and Logistic 
+Regression. 
+6. Model Evaluation: The classification performance was 
+assessed using standard evaluation metrics, including 
+accuracy, precision, recall, and F1-score, based on the 
+confusion matrix. 
+7. Conclusion: The final analysis interpreted the sentiment 
+distribution and evaluated the model's effectiveness in 
+classifying customer sentiments regarding delivery time 
+from Shopee Xpress. 
+ 
+The following sections provide a comprehensive explanation 
+of each step. 
+ 
+2.1 
+Data Collection  
+This research utilises customer reviews from X and the 
+Google Play Store as the primary data sources. The collected 
+reviews specifically mention Shopee Xpress, enabling an in-
+depth sentiment analysis of customer perceptions of the 
+logistics service, particularly regarding delivery time 
+performance. 
+2.1.1 
+The Search Keywords and Time Frame: The 
+keywords “Shopee Xpress” and “SPX” were used as 
+search queries to retrieve relevant data. The data 
+collection period spanned from January 1, 2024, to 
+March 31, 2025, capturing a broad range of recent 
+customer opinions. 
+2.1.2 
+Data Acquisition Method: The data was extracted 
+using web scraping techniques, leveraging the API 
+services provided by both platforms. The scraping 
+process involved retrieving publicly available 
+customer reviews based on predefined search 
+criteria. To maintain data integrity and avoid 
+redundancy, duplicate entries were removed after 
+extraction. 
+2.1.3 
+Dataset Overview: The final dataset contains 3383 
+reviews with 621 records from X and 2762 records 
+from the Google Play Store, each containing 
+multiple attributes. X Dataset had attributes include 
+conversation_id_str, 
+created_at, 
+favorite_count, 
+full_text, 
+id_str, 
+image_url, 
+in_reply_to_screen_name, 
+lang, 
+location, 
+quote_count, reply_count, retweet_count, tweet_url, 
+user_id_str, and username. The Google Play Store 
+Dataset had attributes that include reviewId, 
+userName, 
+userImage, 
+content, 
+score, 
+thumbsUpCount, 
+reviewCreatedVersionAt, 
+replyContent, repliedAt, and appVersion. 
+ 
+After collecting data from X and the Google Play Store, 
+the datasets were standardised and merged into a single 
+unified dataset for comprehensive analysis. Since each 
+dataset 
+had 
+different 
+structures 
+and 
+attributes, 
+a 
+transformation process was applied before merging. This 
+involved selecting only the relevant attribute, specifically the 
+review text and the date the review was created, while 
+discarding unnecessary fields. This step ensured the merged 
+dataset maintains a consistent format, making it suitable for 
+further joint processing. 
+Despite the structural alignment, the two platforms still 
+exhibit notable differences in content characteristics. X limits 
+the number of characters in each post and often includes 
+elements such as mentions, hashtags, and URLs. In contrast, 
+reviews on the Google Play Store are typically longer, 
+unrestricted in length, and may include emojis. A data 
+cleansing stage was applied to harmonise content from both 
+platforms and ensure that only relevant and structured textual 
+data was analysed. Furthermore, data from X frequently 
+contains spam, irony, or sarcasm, which poses challenges for 
+traditional sentiment analysis algorithms like SVM and 
+Logistic Regression; Google Play Store reviews may also be 
+irrelevant, such as those discussing the application itself 
+rather than logistics services. To address these issues, manual 
+filtering was implemented during the labelling stage to ensure 
+that only reviews pertinent to the research topic were 
+included. This filtering process aims to produce a dataset that 
+accurately reflects customer assessments of delivery 
+IJID (International Journal on Informatics for Development), e-ISSN: 2549-7448 
+Vol. 14, No. 2, December 2025, Pp. 640-658  
+ 
+This article is distributed under the terms of the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
+See for details: https://creativecommons.org/licenses/by-nc-nd/4.0/ 
+643 
+timeliness by the Shopee Xpress logistics service, thereby 
+enabling more effective and context-specific model training. 
+ 
+2.2 
+Data Transformation 
+The X and Google Play Store datasets possess distinct 
+attribute structures, necessitating a transformation process to 
+ensure uniformity and compatibility. This transformation 
+involves attribute selection, data normalisation, and dataset 
+integration to facilitate a coherent sentiment analysis. 
+2.2.1 
+Attribute Selection and Standardisation: Given the 
+differences in attribute naming and structure, the 
+following adjustments were applied: 
+• 
+X dataset: The selection of attributes used in 
+this 
+research 
+was 
+“created_at” 
+and 
+“full_text”. The “created_at” attribute was 
+originally in a timestamp format and 
+converted into a “date” field. Meanwhile, the 
+“full_text” attribute was extracted and 
+renamed as “review” to align with the dataset 
+from the Google Play Store. 
+• 
+Google Play Store dataset: The selection of 
+attributes used in this research was “at” and 
+“content”. The “at” attribute, representing the 
+timestamp of each review, was transformed 
+into a “date” field. Similarly, the “content” 
+attribute was renamed as “review”. 
+2.2.2 
+Date 
+Format 
+Normalisation: 
+To 
+maintain 
+consistency in representing temporal data, all dates 
+from X and Google Play Store datasets were 
+standardised to the YYYY-MM-DD format. This 
+normalisation ensures that reviews from both 
+platforms 
+are 
+temporally 
+aligned, 
+enabling 
+chronological sorting and trend analysis. 
+2.2.3 
+Dataset Integration and Sorting: After transforming 
+and standardising the attributes, the X and Google 
+Play Store datasets were merged into a single 
+structured dataset. The consolidated dataset was 
+sorted in descending order, with the most recent 
+reviews appearing first. The final dataset consisted 
+of 3383 reviews, ensuring a comprehensive and 
+temporally organised corpus for sentiment analysis. 
+ 
+The transformation process ensures consistency across 
+datasets 
+and 
+facilitates 
+seamless 
+pre-processing 
+for 
+subsequent sentiment analysis [21]. A subset of the 
+transformed dataset is presented in Table 1, illustrating the 
+standardised format after the transformation process. 
+ 
+2.3 
+Data Labelling 
+The labelling process was carried out manually by a team 
+of five researchers to ensure that the sentiment classification 
+was done thoroughly and systematically. Each review was 
+categorised into one of the three sentiment classes: positive, 
+negative, or neutral. 
+Table 1. Sample Transformed Dataset 
+Date 
+Review 
+2024-
+01-21   
+Admin @ShopeeCare paket yang saya pesan dengan 
+pengiriman via spx super lama ama lambat ga nyampe 
+pesanan katanya membutuhkan waktu lebih lama kayanya abis 
+ini pesanan tiba2 ilang deh, aduhh. #Kecewa #Lambat 
+2024-
+06-16   
+Sekedar saran buat Shopee, tolong untuk pengiriman SPX 
+(Khusus wilayah Papua) untuk diperhatikan kembali, perlu di 
+perhitungkan dengan baik estimasi waktu pengirimannya, agar 
+tidak melewati batas waktu pengiriman dan akhirnya barang 
+tidak terkirim ke pembeli. Sy perhatikan makin kesini sudah 
+membaik untuk masalah Ongkir, sudah mulai murah, namun 
+harus ditingkatkan kembali terkait jasa pengirimannya   . 
+2024-
+10-20   
+Experience saya Shopee adalah aplikasi terbaik dalam 
+berbelanja, saya lebih suka toko yg mengunakan jasa kirim 
+SPX Express dan saya hanya belanja ditoko yg mengunakan 
+expedisi SPX pengiriman nya mantul selalu tepat waktu kurir 
+nya juga gercep lah buat SPX ⭐⭐⭐⭐⭐ 
+2024-
+12-01   
+Aplikasi shopie sangat membantu sekali selama ini, masukan 
+saja untuk jasa pengiriman SPX perlu perbaikan dan disiplin 
+waktu jangan sampai barang yang sudah sampai area di 
+kembalikan ke toko. 
+2025-
+04-01   
+pengiriman shopee express berkali kali ga pernah tepat waktu 
+pasti dibawa sma kurirnya dulu. smpe pernah 1 minggu sma 
+sekali ga sampe akhirnya di cancel pake spx      
+2025-
+03-28 
+@ShopeeXpres @ShopeeID semakin kesini semakin bagus 
+pelayanan dn semakin memudahkan buat belanja di shopee,, 
+pengiriman selalu on time dn lebih cepat dgn SPX. pokoknya 
+puas banget belanja lewat shopee. terbaiklah apalagi bnyk 
+discount makin murah #ShopeeXpress #Rekomendasi   
+ 
+2.3.1 
+Pre-labelling Review Selection: Before the labelling 
+stage, the team filtered the reviews to include only 
+those that explicitly mentioned delivery times by 
+SPX. To identify these, researchers looked for 
+reviews containing keywords like "waktu" (time), 
+"pengiriman" (delivery), and "SPX". Reviews 
+considered spam, overly sarcastic, ironic, or 
+completely unrelated, such as those commenting on 
+the Shopee app, and others were excluded from the 
+dataset. This filtering step narrowed the data to 
+reviews that were relevant to delivery-related 
+sentiment, enabling the labelling process to focus on 
+pertinent content. 
+2.3.2 
+Classification and Resolution: Given the subjective 
+nature of sentiment analysis, discrepancies in label 
+assignment among researchers were inevitable [22]. 
+In cases of disagreement, two resolution strategies 
+were employed. The first resolution involves a 
+discussion to reach a mutual agreement on the most 
+suitable sentiment label. The second resolution is 
+majority voting, wherein the sentiment label agreed 
+upon by at least three out of five researchers was 
+assigned as the final label. This approach ensures the 
+reliability and consistency of the labelled dataset, 
+reducing potential biases in the classification 
+process. 
+2.3.3 
+Dataset Splitting for Model Training and Testing: 
+After going through the screening process, out of a 
+total of 3383 reviews collected, only 497 reviews 
+specifically discussed the delivery time of the SPX 
+service. These reviews were then selected for use in 
+IJID (International Journal on Informatics for Development), e-ISSN: 2549-7448 
+Vol. 14, No. 2, December 2025, Pp. 640-658  
+ 
+This article is distributed under the terms of the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. 
+See for details: https://creativecommons.org/licenses/by-nc-nd/4.0/ 
+644 
+the next stage of analysis. The dataset was randomly 
+split into training and testing subsets to facilitate 
+machine learning model development. The dataset 
+was split into two parts: 80% (398 reviews) was 
+manually labelled by researchers and used for 
+training to enable the model to learn patterns 
+effectively, while the remaining 20% (99 reviews) 
+was reserved as unlabeled test data to objectively 
+evaluate model performance. This 80:20 split was 
+chosen to balance model generalisation and reliable 
+performance assessment [23], ensuring that the 
+model does not overfit the training data while being 
+adequately tested on unseen samples [24]. 
+ 
+The labelled dataset serves as the foundation for training 
+and evaluating machine learning models, ensuring the 
+robustness and validity of the sentiment classification process 
+[25]. A sample of the labelled data is presented in Table 2, 
+showcasing the sentiment classification assigned by the 
+researchers. 
+ 
+Table 2. Sample of Labelled Data 
+Date 
+Review 
+Label 
+2024-
+01-21   
+Admin @ShopeeCare paket yang saya pesan 
+dengan pengiriman via spx super lama ama lambat 
+ga nyampe pesanan katanya membutuhkan waktu 
+lebih lama kayanya abis ini pesanan tiba2 ilang 
+deh, aduhh. #Kecewa #Lambat 
+negative 
+2024-
+06-16   
+Sekedar saran buat Shopee, tolong untuk 
+pengiriman SPX (Khusus wilayah Papua) untuk 
+diperhatikan kembali, perlu di perhitungkan 
+dengan baik estimasi waktu pengirimannya, agar 
+tidak melewati batas waktu pengiriman dan 
+akhirnya barang tidak terkirim ke pembeli. Sy 
+perhatikan makin kesini sudah membaik untuk 
+masalah Ongkir, sudah mulai murah, namun harus 
+ditingkatkan kembali terkait jasa pengirimannya 
+  . 
+neutral 
+2024-
+10-20   
+Experience saya Shopee adalah aplikasi terbaik 
+dalam berbelanja, saya lebih suka toko yg 
+mengunakan jasa kirim SPX Express dan saya 
+hanya belanja ditoko yg mengunakan expedisi 
+SPX pengiriman nya mantul selalu tepat waktu 
+kurir nya juga gercep lah buat SPX 
+⭐⭐⭐⭐⭐ 
+positive 
+2024-
+12-01   
+Aplikasi shopie sangat membantu sekali selama 
+ini, masukan saja untuk jasa pengiriman SPX perlu 
+perbaikan dan disiplin waktu jangan sampai 
+barang yang sudah sampai area di kembalikan ke 
+toko. 
+neutral 
+2025-
+04-01   
+pengiriman shopee express berkali kali ga pernah 
+tepat waktu pasti dibawa sma kurirnya dulu. smpe 
+pernah 1 minggu sma sekali ga sampe akhirnya di 
+cancel pake spx      
+negative 
+2025-
+03-28 
+@ShopeeXpres @ShopeeID semakin kesini 
+semakin bagus pelayanan dn semakin 
+memudahkan buat belanja di shopee,, pengiriman 
+selalu on time dn lebih cepat dgn SPX. pokoknya 
+puas banget belanja lewat shopee. terbaiklah 
+apalagi bnyk discount makin murah 
+#ShopeeXpress #Rekomendasi   
+positive 
+ 
+2.4 
+Data Pre-processing  
+Data pre-processing is a crucial step in text-based 
+machine learning tasks [26], particularly in sentiment 
+analysis, as it enhances data quality and ensures that the input 
+text is well-structured for algorithmic processing [27]. Raw 
+textual data often contains inconsistencies, noise, and 
+unnecessary elements that can negatively impact the 
+performance of classification models [28]. Therefore, pre-
+processing is essential to improve text uniformity, reduce 
+dimensionality, and optimise feature extraction [29]. This 
+study applied a series of pre-processing steps to refine the 
+dataset before implementing machine learning algorithms. 
+The following steps were conducted: cleansing, case folding, 
+normalisation, stopword removal, and stemming. Each pre-
+processing technique plays a vital role in refining the dataset 
+for sentiment analysis. 
+2.4.1 
+Cleansing: It is a fundamental pre-processing step in 
+text mining that removes irrelevant or unnecessary 
+elements from raw textual data. This process is 
+essential in sentiment analysis, as unstructured data 
+often contains noise that can negatively affect model 
+performance [30]. This study draws on data 
+collected from two platforms with notably different 
+content characteristics: X and the Google Play Store. 
+A character limit constrains posts on X and often 
+includes non-textual elements such as user mentions 
+(e.g., 
+"@ShopeeXpress"), 
+hashtags 
+(e.g., 
+"#Kecewa"), URLs, and emojis. The language used 
+is typically informal and concise, reflecting quick, 
+real-time reactions. In contrast, reviews on the 
+Google Play Store tend to be longer and more 
+detailed, with no character restrictions. These 
+reviews are usually more structured, descriptive, and 
+narrative in nature, as users often share their 
+experiences 
+in 
+greater 
+depth. 
+Given 
+these 
+differences, pre-processing the data posed particular 
+challenges. To address this, a thorough data 
+cleansing process was applied to ensure consistency 
+across both sources. This involved removing 
+elements 
+such 
+as 
+mentions, 
+hashtags, 
+and 
+hyperlinks, which are more common on X. 
+Additionally, non-alphabetic characters like emojis 
+and special symbols frequently found in both 
+platforms were also excluded to minimise noise and 
+enhance the clarity of the textual data for further 
+analysis. Table 3 presents an example of the dataset 
+before and after the cleansing process. 
+ 
+Table 3. Sample of Data After the Cleansing Process 
+Before 
+After 
+Admin @ShopeeCare Paket yang 
+saya pesan dengan pengiriman via 
+spx super lama ama lambat ga 
+nyampe pesanan katanya 
+membutuhkan waktu lebih lama 
+kayanya abis ini pesanan tiba2 ilang 
+deh, aduhh. #Kecewa #Lambat 
+Admin paket yang saya pesan 
+dengan pengiriman via spx super 
+lama ama lambat ga nyampe 
+pesanan katanya membutuhkan 
+waktu lebih lama kayanya abis ini 
+pesanan tiba ilang deh aduhh 
