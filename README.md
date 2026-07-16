@@ -36,8 +36,13 @@ ReVera/
 │   └── preprocessing/
 │       ├── feature_engineering.py   # Script penambahan fitur-fitur baru
 │       └── text_preprocessing.py    # Script pembersihan teks & Stemming
-├── doc/
-│   └── detail-tugas.txt      # Rubrik dan kriteria penugasan kampus
+├── doc/my-mine-kelompok/
+│       ├── artikel_ilmiah_revera.md       # Artikel Ilmiah (Bahasa Indonesia)
+│       ├── artikel_ilmiah_revera_en.md    # Artikel Ilmiah (Bahasa Inggris)
+│       ├── presentasi_revera.html         # Slide Presentasi interaktif (HTML/CSS/JS)
+│       ├── presentasi_revera.pdf          # Slide Presentasi versi PDF (Fullscreen)
+│       ├── generate_pdf.py                # Script untuk men-generate PDF presentasi
+│       └── detail-tugas.txt               # Rubrik dan kriteria penugasan kampus
 ├── env/                      # Python Virtual Environment
 ├── analyze_dataset.py        # Script profiling singkat lewat CLI
 ├── products.txt              # Daftar URL produk Shopee target scraping
@@ -95,6 +100,12 @@ Membersihkan tanda baca, *demojize* emoji, membuang kata hubung, dan merubah ke 
 python src/preprocessing/text_preprocessing.py
 ```
 *Hasil akan tersimpan di `data/processed/dataset_cleaned.csv` dan siap untuk tahap Pemodelan ML.*
+
+### 5. Laporan & Presentasi
+Seluruh dokumen hasil analisis akhir (Artikel Ilmiah dan Slide Presentasi) sudah disiapkan dan tersimpan di dalam folder `doc/my-mine-kelompok/`.
+- **Slide Presentasi (Interaktif)**: Buka file `doc/my-mine-kelompok/presentasi_revera.html` menggunakan browser (sangat disarankan saat presentasi).
+- **Slide Presentasi (PDF)**: Tersedia di `doc/my-mine-kelompok/presentasi_revera.pdf` sebagai backup/print.
+- **Artikel Ilmiah**: Tersedia dalam dua bahasa, yaitu `doc/my-mine-kelompok/artikel_ilmiah_revera.md` (ID) dan `doc/my-mine-kelompok/artikel_ilmiah_revera_en.md` (EN).
 
 ---
 
