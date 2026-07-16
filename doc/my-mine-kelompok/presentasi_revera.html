@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analisis Sentimen Ulasan Forebie di Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-dark: #06060F;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.08);
+      --accent-orange: #FF6B35;
+      --accent-orange-glow: rgba(255, 107, 53, 0.3);
+      --accent-purple: #A855F7;
+      --accent-blue: #3B82F6;
+      --accent-green: #22C55E;
+      --accent-yellow: #FACC15;
+      --accent-red: #EF4444;
+      --accent-pink: #EC4899;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --border: rgba(255, 255, 255, 0.08);
+      --font: 'Inter', -apple-system, sans-serif;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: var(--font);
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== BACKGROUND ===== */
+    .bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: orbFloat 25s infinite ease-in-out alternate; }
+    .orb-1 { width: 500px; height: 500px; background: var(--accent-orange); top: -10%; left: -5%; }
+    .orb-2 { width: 400px; height: 400px; background: var(--accent-purple); bottom: -5%; right: -5%; animation-delay: -8s; }
+    .orb-3 { width: 350px; height: 350px; background: var(--accent-blue); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -16s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+      100% { transform: translate(10px, -10px) scale(1.02); }
+    }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ===== SLIDES ===== */
+    .slides-container { position: relative; width: 100%; height: 100%; z-index: 1; }
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 60px 80px;
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none; visibility: hidden;
+      overflow-y: auto;
+    }
+    .slide.active { opacity: 1; transform: translateY(0); pointer-events: all; visibility: visible; }
+    .slide-inner { max-width: 1100px; width: 100%; display: flex; flex-direction: column; gap: 24px; }
+
+    /* ===== TYPOGRAPHY ===== */
+    .slide-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-orange);
+    }
+    .slide-tag::before { content: ''; width: 24px; height: 2px; background: var(--accent-orange); border-radius: 2px; }
+    h1 { font-size: clamp(34px, 5vw, 52px); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; }
+    h2 { font-size: clamp(26px, 3.5vw, 40px); font-weight: 700; line-height: 1.2; letter-spacing: -1px; }
+    h3 { font-size: 18px; font-weight: 600; line-height: 1.3; }
+    .subtitle { font-size: clamp(15px, 1.8vw, 18px); color: var(--text-secondary); line-height: 1.7; max-width: 800px; }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .highlight { color: var(--accent-orange); font-weight: 700; }
+
+    /* ===== ICON BOX ===== */
+    .icon-box {
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .icon-box.sm { width: 36px; height: 36px; border-radius: 9px; }
+    .icon-box.sm svg { width: 18px; height: 18px; }
+    .icon-box.md { width: 44px; height: 44px; }
+    .icon-box.md svg { width: 22px; height: 22px; }
+    .icon-box.lg { width: 56px; height: 56px; border-radius: 14px; }
+    .icon-box.lg svg { width: 28px; height: 28px; }
+    .icon-box.orange { background: rgba(255,107,53,0.10); }
+    .icon-box.orange svg { stroke: var(--accent-orange); }
+    .icon-box.purple { background: rgba(168,85,247,0.10); }
+    .icon-box.purple svg { stroke: var(--accent-purple); }
+    .icon-box.blue { background: rgba(59,130,246,0.10); }
+    .icon-box.blue svg { stroke: var(--accent-blue); }
+    .icon-box.green { background: rgba(34,197,94,0.10); }
+    .icon-box.green svg { stroke: var(--accent-green); }
+    .icon-box.red { background: rgba(239,68,68,0.10); }
+    .icon-box.red svg { stroke: var(--accent-red); }
+    .icon-box.yellow { background: rgba(250,204,21,0.10); }
+    .icon-box.yellow svg { stroke: var(--accent-yellow); }
+    .icon-box.gradient { background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(168,85,247,0.08)); }
+    .icon-box.gradient svg { stroke: var(--accent-orange); }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+      backdrop-filter: blur(20px); transition: all 0.3s ease;
+    }
+    .card:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .cards-grid { display: grid; gap: 16px; }
+    .cards-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .cards-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+    .card-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .card-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+      border-radius: 100px; font-size: 13px; font-weight: 600;
+      background: rgba(255,107,53,0.12); color: var(--accent-orange); border: 1px solid rgba(255,107,53,0.2);
+    }
+
+    /* ===== PIPELINE ===== */
+    .pipeline { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; }
+    .pipeline-step {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); min-width: 130px; text-align: center; transition: all 0.3s ease;
+    }
+    .pipeline-step:hover { background: var(--bg-card-hover); transform: translateY(-3px); border-color: var(--accent-orange); }
+    .pipeline-step .step-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .pipeline-step .step-sub { font-size: 11px; color: var(--text-muted); }
+    .pipeline-arrow { font-size: 20px; color: var(--text-muted); padding: 0 6px; flex-shrink: 0; }
+
+    /* ===== BAR CHART ===== */
+    .bar-chart { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+    .bar-row { display: flex; align-items: center; gap: 14px; }
+    .bar-label { min-width: 160px; font-size: 14px; font-weight: 600; text-align: right; }
+    .bar-track { flex: 1; height: 36px; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; position: relative; }
+    .bar-fill {
+      height: 100%; border-radius: 8px; display: flex; align-items: center; padding-left: 14px;
+      font-size: 13px; font-weight: 700; color: white; width: 0;
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .slide.active .bar-fill { width: var(--bar-width); }
+    .bar-fill.orange { background: linear-gradient(90deg, var(--accent-orange), #FF8F65); }
+    .bar-fill.purple { background: linear-gradient(90deg, var(--accent-purple), #C084FC); }
+    .bar-fill.blue { background: linear-gradient(90deg, var(--accent-blue), #60A5FA); }
+    .bar-fill.green { background: linear-gradient(90deg, var(--accent-green), #4ADE80); }
+    .bar-fill.red { background: linear-gradient(90deg, var(--accent-red), #F87171); }
+    .bar-fill.yellow { background: linear-gradient(90deg, #D97706, var(--accent-yellow)); }
+    .bar-value { min-width: 50px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+    /* ===== STAT CARDS ===== */
+    .stat-card { text-align: center; padding: 24px 16px; }
+    .stat-number { font-size: clamp(30px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; }
+    .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+
+    /* ===== METRIC CARDS ===== */
+    .metric-card { position: relative; overflow: hidden; }
+    .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0; }
+    .metric-card.positive::before { background: var(--accent-green); }
+    .metric-card.negative::before { background: var(--accent-red); }
+    .metric-card.neutral::before { background: var(--accent-yellow); }
+    .metric-score { font-size: 38px; font-weight: 800; line-height: 1; margin: 10px 0 4px; }
+    .metric-card.positive .metric-score { color: var(--accent-green); }
+    .metric-card.negative .metric-score { color: var(--accent-red); }
+    .metric-card.neutral .metric-score { color: var(--accent-yellow); }
+    .metric-detail { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px; }
+
+    /* ===== STEPS LIST ===== */
+    .steps-list { display: flex; flex-direction: column; gap: 8px; }
+    .step-item {
+      display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); transition: all 0.3s ease;
+    }
+    .step-item:hover { background: var(--bg-card-hover); border-color: var(--accent-orange); }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .step-text { font-size: 13.5px; line-height: 1.5; color: var(--text-secondary); }
+    .step-text strong { color: var(--text-primary); }
+
+    /* ===== TABLE ===== */
+    .comp-table {
+      width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px;
+      overflow: hidden; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    }
+    .comp-table th, .comp-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    .comp-table th { background: rgba(255,255,255,0.04); font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .comp-table td { color: var(--text-secondary); }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table .highlight-col { background: rgba(255,107,53,0.06); color: var(--accent-orange); font-weight: 600; }
+    .comp-table .highlight-col strong { color: var(--accent-orange); }
+
+    /* ===== FINDING CARD ===== */
+    .finding-card { display: flex; gap: 18px; align-items: flex-start; }
+    .finding-content { flex: 1; }
+    .finding-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .finding-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+    .finding-example {
+      margin-top: 12px; padding: 12px 16px; background: rgba(0,0,0,0.3);
+      border-radius: 8px; border-left: 3px solid var(--accent-orange);
+      font-size: 13px; color: var(--text-muted); font-style: italic;
+    }
+
+    /* ===== COVER ===== */
+    .cover-badge {
+      display: inline-flex; align-items: center; gap: 10px; padding: 8px 20px;
+      background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.25);
+      border-radius: 100px; font-size: 14px; font-weight: 500; color: var(--accent-orange);
+    }
+    .cover-badge svg { width: 16px; height: 16px; stroke: var(--accent-orange); }
+    .cover-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+    .cover-meta span { font-size: 15px; color: var(--text-secondary); }
+    .cover-hint {
+      position: absolute; bottom: 40px; display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text-muted); animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    /* ===== WINNER ===== */
+    .winner-card {
+      position: relative; background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(168,85,247,0.08));
+      border: 1px solid rgba(255,107,53,0.25); padding: 32px; text-align: center;
+    }
+    .winner-card .trophy { display: flex; justify-content: center; margin-bottom: 12px; }
+    .winner-card .trophy svg { width: 48px; height: 48px; stroke: var(--accent-orange); }
+    .winner-card .winner-name {
+      font-size: 26px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .winner-scores { display: flex; justify-content: center; gap: 40px; margin-top: 18px; }
+    .winner-score-item { text-align: center; }
+    .winner-score-value { font-size: 34px; font-weight: 800; color: var(--accent-orange); }
+    .winner-score-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ===== INFO BOX ===== */
+    .info-box {
+      display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    }
+    .info-box.border-orange { border-left: 3px solid var(--accent-orange); }
+    .info-box.border-green { border-left: 3px solid var(--accent-green); }
+    .info-box.border-yellow { border-left: 3px solid var(--accent-yellow); }
+    .info-box.border-blue { border-left: 3px solid var(--accent-blue); }
+    .info-box .info-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+    .info-box .info-text strong { color: var(--text-primary); }
+
+    /* ===== PAGE COUNTER ===== */
+    .page-counter {
+      position: fixed; top: 24px; right: 32px; z-index: 100;
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: rgba(6,6,15,0.6); backdrop-filter: blur(16px);
+      border: 1px solid var(--border); border-radius: 100px;
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      transition: opacity 0.3s ease;
+    }
+    .page-counter .current { color: var(--accent-orange); }
+    .page-counter .separator { color: var(--text-muted); opacity: 0.5; }
+
+    /* ===== LAYOUT HELPERS ===== */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .two-col.align-center { align-items: center; }
+    .thankyou-title { font-size: clamp(44px, 7vw, 72px); font-weight: 900; letter-spacing: -3px; text-align: center; }
+    .thankyou-sub { text-align: center; font-size: 17px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .slide { padding: 40px 30px; }
+      .cards-grid.cols-3, .cards-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .pipeline { flex-direction: column; }
+      .pipeline-arrow { transform: rotate(90deg); }
+      .bar-label { min-width: 100px; font-size: 12px; }
+    }
+    @media (max-width: 600px) {
+      .slide { padding: 30px 20px; }
+      .cards-grid.cols-2, .cards-grid.cols-3, .cards-grid.cols-4 { grid-template-columns: 1fr; }
+      .card { padding: 18px; }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    .slide .animate-in { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .slide.active .animate-in { opacity: 1; transform: translateY(0); }
+    .slide.active .animate-in:nth-child(1) { transition-delay: 0.1s; }
+    .slide.active .animate-in:nth-child(2) { transition-delay: 0.2s; }
+    .slide.active .animate-in:nth-child(3) { transition-delay: 0.3s; }
+    .slide.active .animate-in:nth-child(4) { transition-delay: 0.4s; }
+    .slide.active .animate-in:nth-child(5) { transition-delay: 0.5s; }
+    .slide.active .animate-in:nth-child(6) { transition-delay: 0.6s; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+  <div class="bg-grid"></div>
+
+  <!-- ===== SLIDES ===== -->
+  <div class="slides-container">
+
+    <!-- SLIDE 1: COVER -->
+    <div class="slide active" id="slide-1">
+      <div class="slide-inner">
+        <div class="animate-in cover-badge"><i data-lucide="shopping-bag"></i> Studi Kasus: Toko Forebie di Shopee</div>
+        <h1 class="animate-in">Analisis Sentimen Ulasan<br><span class="gradient-text">Toko Forebie di Shopee</span></h1>
+        <p class="subtitle animate-in">Mengklasifikasikan sentimen 684 ulasan pelanggan menggunakan representasi fitur TF-IDF dan perbandingan tiga algoritma klasifikasi — Support Vector Machine, Naive Bayes, dan Logistic Regression — untuk mengidentifikasi model yang paling efektif pada ulasan e-commerce berbahasa Indonesia.</p>
+        <div class="cover-meta animate-in" style="margin-top: 16px;">
+          <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Mata Kuliah Sains Data</span>
+          <span>Program Studi Teknik Informatika</span>
+          <span>Fakultas Sains dan Teknologi, UIN Syarif Hidayatullah Jakarta</span>
+        </div>
+      </div>
+      <div class="cover-hint animate-in">Tekan <strong>→</strong> atau klik tombol untuk navigasi</div>
+    </div>
+
+    <!-- SLIDE 2: ANGGOTA KELOMPOK -->
+    <div class="slide" id="slide-team">
+      <div class="slide-inner" style="align-items: center; text-align: center;">
+        <div class="animate-in slide-tag" style="margin-bottom: 8px;">Tim Peneliti</div>
+        <h2 class="animate-in">Anggota <span class="gradient-text">Kelompok 4</span></h2>
+        <p class="subtitle animate-in" style="margin-bottom: 24px;">Mahasiswa Program Studi Teknik Informatika<br>Universitas Islam Negeri Syarif Hidayatullah Jakarta</p>
+        
+        <div class="cards-grid cols-3 animate-in" style="width: 100%; max-width: 900px;">
+          <div class="card" style="display: flex; flex-direction: column; align-items: center; padding: 32px 24px;">
+            <div class="icon-box lg purple" style="border-radius: 50%; width: 80px; height: 80px; margin-bottom: 16px;">
+              <i data-lucide="user"></i>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); text-align: center;">Mayra Aldisya Asmoro</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px; font-family: monospace;">11230910000059</div>
+          </div>
+          <div class="card" style="display: flex; flex-direction: column; align-items: center; padding: 32px 24px;">
+            <div class="icon-box lg orange" style="border-radius: 50%; width: 80px; height: 80px; margin-bottom: 16px;">
+              <i data-lucide="user"></i>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); text-align: center;">Dewi Saidah Ahmad</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px; font-family: monospace;">11230910000095</div>
+          </div>
+          <div class="card" style="display: flex; flex-direction: column; align-items: center; padding: 32px 24px;">
+            <div class="icon-box lg blue" style="border-radius: 50%; width: 80px; height: 80px; margin-bottom: 16px;">
+              <i data-lucide="user"></i>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; color: var(--text-primary); text-align: center;">Lindan Akbar</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px; font-family: monospace;">11230910000097</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: LATAR BELAKANG -->
+    <div class="slide" id="slide-2">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Latar Belakang</div>
+        <h2 class="animate-in">Ulasan pelanggan sebagai<br><span class="gradient-text">sumber data strategis</span></h2>
+        <p class="subtitle animate-in">Shopee merupakan salah satu platform e-commerce terbesar di Asia Tenggara dengan ratusan juta kunjungan bulanan. Setiap toko memiliki ratusan hingga ribuan ulasan yang berisi feedback berharga, namun volume yang besar membuat analisis manual tidak lagi efisien. Diperlukan pendekatan otomatis berbasis NLP dan machine learning.</p>
+        <div class="cards-grid cols-3 animate-in">
+          <div class="card stat-card">
+            <div class="stat-number gradient-text">100jt+</div>
+            <div class="stat-label">Kunjungan Shopee per bulan di Indonesia</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-number gradient-text">684</div>
+            <div class="stat-label">Ulasan yang berhasil dikumpulkan</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-number gradient-text">10</div>
+            <div class="stat-label">Produk kosmetik Forebie</div>
+          </div>
+        </div>
+        <div class="animate-in info-box border-orange">
+          <div class="icon-box sm orange"><i data-lucide="info"></i></div>
+          <div class="info-text">
+            <strong>Mengapa Forebie?</strong> Toko kosmetik ini dipilih karena memiliki variasi ulasan yang beragam — mulai dari keluhan efek samping skincare hingga pujian kecocokan produk di kulit. Domain kosmetik juga menantang dari perspektif NLP karena ulasan cenderung menggunakan bahasa informal, slang, dan emoji secara intensif, sehingga menuntut preprocessing yang lebih cermat.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: TUJUAN -->
+    <div class="slide" id="slide-3">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Tujuan Penelitian</div>
+        <h2 class="animate-in">Apa yang ingin <span class="gradient-text">dicapai?</span></h2>
+        <div class="cards-grid cols-2 animate-in">
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md gradient"><i data-lucide="globe"></i></div>
+              <div class="card-title">Pengumpulan Data Primer</div>
+            </div>
+            <div class="card-desc">Mengumpulkan ulasan langsung dari halaman produk Shopee menggunakan teknik web scraping berbasis Playwright. Data primer memastikan ulasan yang dianalisis benar-benar berasal dari pelanggan toko, bukan dari platform review pihak ketiga.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md gradient"><i data-lucide="sparkles"></i></div>
+              <div class="card-title">Text Preprocessing</div>
+            </div>
+            <div class="card-desc">Melakukan pra-pemrosesan teks yang mempertimbangkan karakteristik unik ulasan e-commerce berbahasa Indonesia — termasuk konversi emoji, penanganan bahasa informal, penghapusan stopwords dengan pengecualian kata negasi, dan stemming menggunakan Sastrawi.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md gradient"><i data-lucide="cpu"></i></div>
+              <div class="card-title">Perbandingan 3 Algoritma</div>
+            </div>
+            <div class="card-desc">Membangun dan membandingkan tiga model klasifikasi sentimen — SVM (LinearSVC), Naive Bayes (MultinomialNB), dan Logistic Regression — untuk menentukan algoritma yang paling efektif dalam mengklasifikasikan sentimen ulasan pada domain kosmetik.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md gradient"><i data-lucide="bar-chart-2"></i></div>
+              <div class="card-title">Evaluasi dengan Metrik yang Tepat</div>
+            </div>
+            <div class="card-desc">Menggunakan F1-Score weighted sebagai metrik utama, bukan hanya akurasi, karena dataset memiliki distribusi kelas yang tidak seimbang. Ini memastikan evaluasi yang lebih fair terhadap performa model pada setiap kelas sentimen.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: PIPELINE -->
+    <div class="slide" id="slide-4">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Alur Kerja</div>
+        <h2 class="animate-in">Pipeline <span class="gradient-text">End-to-End</span></h2>
+        <p class="subtitle animate-in">Seluruh proses dilakukan secara sistematis — dari pengumpulan data mentah di Shopee hingga menghasilkan model klasifikasi sentimen yang siap digunakan untuk prediksi.</p>
+        <div class="pipeline animate-in">
+          <div class="pipeline-step">
+            <div class="icon-box md gradient"><i data-lucide="globe"></i></div>
+            <span class="step-label">Scraping</span>
+            <span class="step-sub">Kumpulkan data dari Shopee</span>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-step">
+            <div class="icon-box md gradient"><i data-lucide="sparkles"></i></div>
+            <span class="step-label">Preprocessing</span>
+            <span class="step-sub">Bersihkan & normalisasi teks</span>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-step">
+            <div class="icon-box md gradient"><i data-lucide="hash"></i></div>
+            <span class="step-label">TF-IDF</span>
+            <span class="step-sub">Konversi teks → vektor numerik</span>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-step">
+            <div class="icon-box md gradient"><i data-lucide="cpu"></i></div>
+            <span class="step-label">Modeling</span>
+            <span class="step-sub">Latih 3 algoritma klasifikasi</span>
+          </div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-step">
+            <div class="icon-box md gradient"><i data-lucide="check"></i></div>
+            <span class="step-label">Evaluasi</span>
+            <span class="step-sub">Bandingkan & pilih terbaik</span>
+          </div>
+        </div>
+        <div class="animate-in info-box border-blue">
+          <div class="icon-box sm blue"><i data-lucide="info"></i></div>
+          <div class="info-text">
+            Seluruh pipeline diimplementasikan menggunakan Python dengan library utama: <strong>Playwright</strong> untuk scraping, <strong>Sastrawi</strong> untuk stemming Bahasa Indonesia, dan <strong>scikit-learn</strong> untuk TF-IDF, modeling, serta evaluasi. Model terbaik disimpan dalam format <code style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:12px;">.joblib</code> untuk penggunaan prediksi di masa mendatang.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: PENGUMPULAN DATA -->
+    <div class="slide" id="slide-5">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Pengumpulan Data</div>
+        <h2 class="animate-in"><span class="gradient-text">684 ulasan</span> dari 10 produk Forebie</h2>
+        <div class="two-col animate-in">
+          <div>
+            <p style="font-size:14.5px; color:var(--text-secondary); line-height:1.7; margin-bottom:18px;">Data dikumpulkan langsung dari halaman ulasan produk toko Forebie di Shopee menggunakan <strong style="color:var(--text-primary)">Playwright</strong> — sebuah framework browser automation yang mampu mensimulasikan interaksi pengguna nyata. Pendekatan ini diperlukan karena Shopee menggunakan proteksi DOM dinamis yang tidak dapat diakses oleh scraper berbasis HTTP biasa.</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                <div class="icon-box sm blue"><i data-lucide="globe"></i></div>
+                <span style="font-size:13.5px; color:var(--text-secondary);">Navigasi otomatis ke halaman produk dan bagian ulasan</span>
+              </div>
+              <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                <div class="icon-box sm yellow"><i data-lucide="star"></i></div>
+                <span style="font-size:13.5px; color:var(--text-secondary);">Injeksi JavaScript untuk filter rating bintang 1–5 secara terpisah</span>
+              </div>
+              <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                <div class="icon-box sm green"><i data-lucide="file-text"></i></div>
+                <span style="font-size:13.5px; color:var(--text-secondary);">Ekstraksi ID komentar, username, rating, dan teks ulasan</span>
+              </div>
+              <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                <div class="icon-box sm purple"><i data-lucide="refresh-cw"></i></div>
+                <span style="font-size:13.5px; color:var(--text-secondary);">Mode incremental untuk menambah data tanpa duplikasi</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="padding:24px;">
+              <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px;">Struktur Data Awal</div>
+              <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.65; margin-bottom:16px;">
+                Dataset mentah terdiri dari <strong style="color:var(--text-primary)">684 ulasan</strong> dengan 5 kolom utama. Melalui proses feature engineering, ditambahkan 4 kolom baru termasuk label sentimen yang diturunkan dari rating.
+              </p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+                <span class="badge">id_komentar</span>
+                <span class="badge">produk_url</span>
+                <span class="badge">username</span>
+                <span class="badge">rating</span>
+                <span class="badge">ulasan</span>
+              </div>
+              <div style="padding:14px; background:rgba(255,107,53,0.06); border-radius:10px; border:1px solid rgba(255,107,53,0.15);">
+                <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Pelabelan Sentimen</div>
+                <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+                  Rating digunakan sebagai proxy sentimen:<br>
+                  <strong style="color:var(--accent-red);">★ 1–2</strong> → Negatif &nbsp;|&nbsp;
+                  <strong style="color:var(--accent-yellow);">★ 3</strong> → Netral &nbsp;|&nbsp;
+                  <strong style="color:var(--accent-green);">★ 4–5</strong> → Positif
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: PREPROCESSING -->
+    <div class="slide" id="slide-6">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Text Preprocessing</div>
+        <h2 class="animate-in">Data mentah perlu melalui<br><span class="gradient-text">8 tahap preprocessing</span></h2>
+        <p class="subtitle animate-in">Setiap tahap dirancang untuk menghilangkan noise dan menormalisasi teks agar model dapat memproses data secara optimal. Urutan tahapan ini berpengaruh terhadap kualitas hasil akhir.</p>
+        <div class="two-col animate-in">
+          <div class="steps-list">
+            <div class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>Hapus missing values</strong> — baris dengan kolom ulasan kosong dihilangkan dari dataset</div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>Hapus outlier</strong> — ulasan dengan >150 kata dihapus karena umumnya berisi spam atau narasi yang tidak representatif</div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>Case folding</strong> — seluruh teks dikonversi ke huruf kecil untuk konsistensi (contoh: "BAGUS" → "bagus")</div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong>Konversi emoji ke teks</strong> — menggunakan library <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">emoji</code> dengan parameter bahasa Indonesia untuk mempertahankan informasi emosional</div>
+            </div>
+          </div>
+          <div class="steps-list">
+            <div class="step-item">
+              <div class="step-num">5</div>
+              <div class="step-text"><strong>Hapus noise</strong> — URL, mention, angka, dan tanda baca dihilangkan menggunakan regex</div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">6</div>
+              <div class="step-text"><strong>Stopword removal</strong> — kata tidak informatif dihapus, namun kata negasi ("tidak", "kurang", "belum") <span class="highlight">tetap dipertahankan</span></div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">7</div>
+              <div class="step-text"><strong>Stemming</strong> — kata berimbuhan diubah ke bentuk dasar menggunakan Sastrawi (contoh: "berlari" → "lari")</div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">8</div>
+              <div class="step-text"><strong>Label encoding</strong> — label sentimen dikonversi ke numerik: Negatif=0, Netral=1, Positif=2</div>
+            </div>
+          </div>
+        </div>
+        <div class="animate-in info-box border-orange">
+          <div class="icon-box sm orange"><i data-lucide="lightbulb"></i></div>
+          <div class="info-text">
+            <strong>Mengapa kata negasi dipertahankan?</strong> Dalam analisis sentimen, kata negasi mengubah polaritas kalimat secara fundamental. Jika kata "tidak" dihapus, frasa "tidak bagus" menjadi "bagus" — mengubah sentimen negatif menjadi positif. Setelah seluruh preprocessing, dataset akhir terdiri dari <strong>666 ulasan bersih</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: DISTRIBUSI SENTIMEN -->
+    <div class="slide" id="slide-7">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Profil Data</div>
+        <h2 class="animate-in">Distribusi sentimen:<br><span class="gradient-text">didominasi ulasan positif</span></h2>
+        <p class="subtitle animate-in">Dataset final terdiri dari <strong style="color:var(--text-primary)">666 ulasan bersih</strong> dengan distribusi kelas yang tidak seimbang (imbalanced). Pola ini umum ditemukan pada dataset e-commerce — mayoritas pelanggan cenderung memberikan ulasan positif.</p>
+
+        <div class="two-col align-center animate-in">
+          <div class="bar-chart">
+            <div class="bar-row">
+              <div class="bar-label" style="color:var(--accent-green);">● Positif</div>
+              <div class="bar-track">
+                <div class="bar-fill green" style="--bar-width: 62%;">62%</div>
+              </div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label" style="color:var(--accent-yellow);">● Netral</div>
+              <div class="bar-track">
+                <div class="bar-fill yellow" style="--bar-width: 32%;">20%</div>
+              </div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label" style="color:var(--accent-red);">● Negatif</div>
+              <div class="bar-track">
+                <div class="bar-fill red" style="--bar-width: 29%;">18%</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="border-left: 3px solid var(--accent-yellow);">
+              <div class="card-header">
+                <div class="icon-box sm yellow"><i data-lucide="alert-triangle"></i></div>
+                <div class="card-title">Class Imbalance</div>
+              </div>
+              <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.65;">
+                Ulasan positif <strong style="color:var(--text-primary)">3x lebih banyak</strong> dari negatif. Tanpa penanganan, model akan cenderung bias terhadap kelas mayoritas — memprediksi "Positif" untuk hampir semua input.
+              </p>
+              <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.65; margin-top:10px;">
+                <strong style="color:var(--text-primary);">Solusi:</strong> Parameter <code style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:12px;">class_weight='balanced'</code> diterapkan pada SVM dan Logistic Regression. Parameter ini otomatis menyesuaikan bobot kelas berdasarkan frekuensi, sehingga kelas minoritas mendapat penalti lebih besar saat salah prediksi.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: TF-IDF & 3 MODEL -->
+    <div class="slide" id="slide-8">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Metode</div>
+        <h2 class="animate-in">TF-IDF + <span class="gradient-text">3 Algoritma Klasifikasi</span></h2>
+        <p class="subtitle animate-in">Teks yang sudah bersih direpresentasikan sebagai vektor numerik menggunakan TF-IDF, kemudian tiga algoritma klasifikasi dibandingkan untuk menemukan model yang paling efektif.</p>
+
+        <div class="two-col animate-in">
+          <div class="card" style="border-left:3px solid var(--accent-blue);">
+            <div class="card-header">
+              <div class="icon-box md blue"><i data-lucide="hash"></i></div>
+              <div class="card-title">TF-IDF (Term Frequency–Inverse Document Frequency)</div>
+            </div>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.65; margin-bottom:12px;">
+              Model machine learning memerlukan input numerik, sehingga teks perlu dikonversi menjadi representasi vektor. TF-IDF mengukur seberapa penting sebuah kata dalam suatu dokumen relatif terhadap seluruh korpus — kata yang sering muncul di satu ulasan tapi jarang di ulasan lain mendapat bobot tinggi.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-muted);">
+              <span>● <strong style="color:var(--text-secondary)">max_features=5000</strong> — membatasi dimensi fitur</span>
+              <span>● <strong style="color:var(--text-secondary)">ngram_range=(1,2)</strong> — unigram + bigram untuk menangkap frasa seperti "tidak cocok"</span>
+              <span>● <strong style="color:var(--text-secondary)">min_df=2, max_df=0.95</strong> — filter kata terlalu jarang atau terlalu umum</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="icon-box md orange"><i data-lucide="shield"></i></div>
+                <div class="card-title">SVM (LinearSVC)</div>
+              </div>
+              <div class="card-desc">Mencari hyperplane pemisah antar kelas dengan margin terlebar. Efektif untuk data berdimensi tinggi seperti vektor TF-IDF. Menggunakan <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">class_weight='balanced'</code>.</div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="icon-box md purple"><i data-lucide="calculator"></i></div>
+                <div class="card-title">Naive Bayes (MultinomialNB)</div>
+              </div>
+              <div class="card-desc">Algoritma probabilistik berbasis teorema Bayes yang menghitung peluang sebuah dokumen termasuk dalam kategori tertentu berdasarkan distribusi kata. Menggunakan parameter smoothing <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">alpha=1.0</code>.</div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="icon-box md green"><i data-lucide="trending-up"></i></div>
+                <div class="card-title">Logistic Regression</div>
+              </div>
+              <div class="card-desc">Model probabilistik yang menghitung peluang kelas menggunakan fungsi sigmoid. Menghasilkan probabilitas untuk setiap kelas, memudahkan interpretasi. Menggunakan <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">class_weight='balanced'</code> dan <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">max_iter=1000</code>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: HASIL -->
+    <div class="slide" id="slide-9">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Hasil</div>
+        <h2 class="animate-in">Model dengan <span class="gradient-text">performa terbaik</span></h2>
+
+        <div class="animate-in card winner-card">
+          <div class="trophy"><i data-lucide="trophy"></i></div>
+          <div class="winner-name">Logistic Regression</div>
+          <div class="winner-scores">
+            <div class="winner-score-item">
+              <div class="winner-score-value">0.732</div>
+              <div class="winner-score-label">F1-Score (Weighted)</div>
+            </div>
+            <div class="winner-score-item">
+              <div class="winner-score-value">73.1%</div>
+              <div class="winner-score-label">Accuracy</div>
+            </div>
+          </div>
+        </div>
+
+        <p class="subtitle animate-in">Dataset dibagi 80% training dan 20% testing dengan stratified split. Berikut perbandingan performa ketiga model berdasarkan F1-Score weighted — metrik yang lebih representatif dibanding akurasi untuk dataset imbalanced.</p>
+
+        <div class="bar-chart animate-in">
+          <div class="bar-row">
+            <div class="bar-label">Logistic Regression</div>
+            <div class="bar-track">
+              <div class="bar-fill orange" style="--bar-width: 73.2%;">F1: 0.732</div>
+            </div>
+            <div class="bar-value" style="color:var(--accent-orange);">#1</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">SVM (LinearSVC)</div>
+            <div class="bar-track">
+              <div class="bar-fill purple" style="--bar-width: 71.7%;">F1: 0.717</div>
+            </div>
+            <div class="bar-value">#2</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Naive Bayes</div>
+            <div class="bar-track">
+              <div class="bar-fill blue" style="--bar-width: 68.5%;">F1: 0.685</div>
+            </div>
+            <div class="bar-value">#3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: DETAIL PERFORMA -->
+    <div class="slide" id="slide-10">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Detail Performa</div>
+        <h2 class="animate-in">Classification Report<br><span class="gradient-text">per kategori sentimen</span></h2>
+        <p class="subtitle animate-in">Performa Logistic Regression bervariasi antar kelas. Kelas Positif sebagai mayoritas menunjukkan performa terbaik, sementara kelas Netral menjadi yang paling menantang — konsisten dengan temuan di berbagai penelitian analisis sentimen.</p>
+
+        <div class="cards-grid cols-3 animate-in">
+          <div class="card metric-card positive">
+            <div style="font-size:13px; font-weight:600; color:var(--accent-green);">POSITIF</div>
+            <div class="metric-score">0.82</div>
+            <div style="font-size:14px; color:var(--text-primary);">F1-Score</div>
+            <div class="metric-detail">
+              Precision: 0.88 · Recall: 0.78<br>
+              83 sampel uji
+            </div>
+            <div style="margin-top:8px; font-size:12px; color:var(--accent-green);">Performa tertinggi</div>
+          </div>
+          <div class="card metric-card negative">
+            <div style="font-size:13px; font-weight:600; color:var(--accent-red);">NEGATIF</div>
+            <div class="metric-score">0.71</div>
+            <div style="font-size:14px; color:var(--text-primary);">F1-Score</div>
+            <div class="metric-detail">
+              Precision: 0.60 · Recall: 0.88<br>
+              24 sampel uji
+            </div>
+            <div style="margin-top:8px; font-size:12px; color:var(--text-muted);">Recall tinggi (88%)</div>
+          </div>
+          <div class="card metric-card neutral">
+            <div style="font-size:13px; font-weight:600; color:var(--accent-yellow);">NETRAL</div>
+            <div class="metric-score">0.46</div>
+            <div style="font-size:14px; color:var(--text-primary);">F1-Score</div>
+            <div class="metric-detail">
+              Precision: 0.50 · Recall: 0.36<br>
+              27 sampel uji
+            </div>
+            <div style="margin-top:8px; font-size:12px; color:var(--accent-yellow);">Kelas paling sulit</div>
+          </div>
+        </div>
+
+        <div class="animate-in info-box border-yellow">
+          <div class="icon-box sm yellow"><i data-lucide="lightbulb"></i></div>
+          <div class="info-text">
+            <strong>Mengapa kelas Netral sulit?</strong> Ulasan netral secara linguistik cenderung ambigu — sering berisi campuran pujian dan kritik dalam satu kalimat, atau hanya bersifat deskriptif tanpa ekspresi emosi yang jelas. Temuan ini konsisten dengan penelitian Kadir & Fairuzabadi [5] yang juga melaporkan F1 terendah pada kelas Netral (hanya 0.14).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11: TEMUAN UNIK -->
+    <div class="slide" id="slide-11">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Temuan Unik</div>
+        <h2 class="animate-in">Anomali pada<br><span class="gradient-text">data ulasan negatif</span></h2>
+        <p class="subtitle animate-in">Analisis Word Cloud pada ulasan negatif mengungkapkan dua fenomena menarik yang jarang dibahas dalam literatur analisis sentimen e-commerce. Kedua temuan ini berimplikasi penting terhadap kualitas data dan performa model.</p>
+
+        <div class="animate-in" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="card">
+            <div class="finding-card">
+              <div class="icon-box lg red"><i data-lucide="alert-triangle"></i></div>
+              <div class="finding-content">
+                <div class="finding-title">Kontaminasi dari Balasan Penjual (Seller Reply Leakage)</div>
+                <div class="finding-desc">
+                  Kata-kata seperti <strong style="color:var(--text-primary)">"mohon", "maaf", "minbie", "bantu"</strong> mendominasi Word Cloud ulasan negatif. Setelah investigasi, ditemukan bahwa web scraper turut mengekstrak teks <strong style="color:var(--accent-orange)">balasan admin toko</strong> yang melekat pada ulasan pelanggan. Admin Forebie ("Minbie") secara konsisten membalas ulasan bintang 1–2 dengan template yang sama, sehingga kata-kata dari balasan ini mencemari distribusi kata pada data negatif.
+                </div>
+                <div class="finding-example">
+                  "Mohon maaf kak, apakah ada kendala? Minbie siap membantu" — template balasan admin toko Forebie yang muncul pada hampir semua ulasan negatif
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="finding-card">
+              <div class="icon-box lg purple"><i data-lucide="sparkles"></i></div>
+              <div class="finding-content">
+                <div class="finding-title">Artefak Translasi Emoji</div>
+                <div class="finding-desc">
+                  Proses konversi emoji ke teks Indonesia menggunakan <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">emoji.demojize(language="id")</code> menghasilkan kata-kata yang menyesatkan setelah tahap stemming. Kata-kata hasil translasi emoji dipecah menjadi token individual yang kehilangan makna aslinya, memunculkan noise pada fitur teks.
+                </div>
+                <div style="display:flex; gap:12px; margin-top:14px; flex-wrap:wrap;">
+                  <div style="padding:10px 16px; background:rgba(168,85,247,0.08); border-radius:8px; font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                    <strong style="color:var(--text-primary);">Hati bersinar:</strong> "hati_bersinar" → token <span style="color:var(--accent-purple);">"hati" + "sinar"</span>
+                  </div>
+                  <div style="padding:10px 16px; background:rgba(168,85,247,0.08); border-radius:8px; font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                    <strong style="color:var(--text-primary);">Wajah menangis:</strong> "wajah_menangis_keras" → token <span style="color:var(--accent-purple);">"wajah" + "menang" + "keras"</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 12: PERBANDINGAN -->
+    <div class="slide" id="slide-12">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Perbandingan</div>
+        <h2 class="animate-in">Posisi penelitian ini<br><span class="gradient-text">terhadap studi sejenis</span></h2>
+        <p class="subtitle animate-in">Meskipun akurasi headline lebih rendah dibanding beberapa penelitian sebelumnya, weighted F1-Score menunjukkan bahwa model ini lebih seimbang dalam mengenali ketiga kelas sentimen.</p>
+
+        <div class="animate-in" style="overflow-x:auto;">
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Aspek</th>
+                <th>Kadir & Fairuzabadi [5]</th>
+                <th>Saepudin et al. [6]</th>
+                <th>Fathurrohman et al. [7]</th>
+                <th class="highlight-col">Penelitian Ini</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--text-primary)">Platform</strong></td>
+                <td>Shopee (Google Play)</td>
+                <td>Shopee (Google Play)</td>
+                <td>Shopee Xpress</td>
+                <td class="highlight-col"><strong>Shopee (Toko Forebie)</strong></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--text-primary)">Jumlah Data</strong></td>
+                <td>5.000</td>
+                <td>3.000</td>
+                <td>497</td>
+                <td class="highlight-col"><strong>684</strong></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--text-primary)">Pelabelan</strong></td>
+                <td>Rating</td>
+                <td>TextBlob (otomatis)</td>
+                <td>Manual</td>
+                <td class="highlight-col"><strong>Rating</strong></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--text-primary)">Model Terbaik</strong></td>
+                <td>LR (85,11%)</td>
+                <td>Random Forest (94%)</td>
+                <td>SVM (93%)</td>
+                <td class="highlight-col"><strong>LR (73,1%)</strong></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--text-primary)">F1-Score</strong></td>
+                <td style="color:var(--accent-yellow);">macro: 0,58</td>
+                <td>—</td>
+                <td>—</td>
+                <td class="highlight-col"><strong style="color:var(--accent-green);">weighted: 0,732</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="animate-in info-box border-green">
+          <div class="icon-box sm green"><i data-lucide="check"></i></div>
+          <div class="info-text">
+            <strong>Meskipun akurasi headline lebih rendah, weighted F1-Score (0,732) lebih tinggi dari macro-F1 penelitian [5] (0,58).</strong>
+            Perbedaan ini karena: (1) klasifikasi 3 kelas secara inheren lebih sulit dari biner, (2) dataset lebih kecil (684 vs 5.000), (3) domain kosmetik menggunakan bahasa informal dan emoji intensif. Model ini lebih seimbang — tidak hanya mengandalkan prediksi kelas mayoritas.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 13: KENAPA LR MENANG -->
+    <div class="slide" id="slide-13">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Analisis</div>
+        <h2 class="animate-in">Mengapa <span class="gradient-text">Logistic Regression</span> unggul?</h2>
+        <p class="subtitle animate-in">Keunggulan Logistic Regression pada dataset ini konsisten dengan temuan Kadir & Fairuzabadi [5] yang juga melaporkan LR sebagai model terbaik untuk analisis sentimen ulasan Shopee. Terdapat tiga faktor utama yang menjelaskan hal ini.</p>
+
+        <div class="cards-grid cols-3 animate-in">
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md orange"><i data-lucide="target"></i></div>
+              <div class="card-title">Estimasi Probabilistik</div>
+            </div>
+            <div class="card-desc">Logistic Regression menghasilkan probabilitas kelas untuk setiap prediksi, memungkinkan decision boundary yang lebih halus dan nuanced. Berbeda dengan SVM yang hanya menentukan sisi mana dari hyperplane sebuah data berada, LR memberikan tingkat "keyakinan" untuk setiap kelas.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md purple"><i data-lucide="scale"></i></div>
+              <div class="card-title">Kompatibel dengan Class Weight</div>
+            </div>
+            <div class="card-desc">Parameter <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">class_weight='balanced'</code> bekerja lebih efektif pada Logistic Regression karena langsung mempengaruhi fungsi loss secara proporsional. Kelas minoritas mendapat penalti yang lebih besar saat salah diprediksi, mendorong model untuk lebih "memperhatikan" kelas Negatif dan Netral.</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-box md blue"><i data-lucide="shield"></i></div>
+              <div class="card-title">Stabil pada Data Terbatas</div>
+            </div>
+            <div class="card-desc">Dengan hanya 666 sampel, Logistic Regression menunjukkan performa yang lebih stabil dibandingkan SVM yang cenderung lebih sensitif terhadap ukuran dataset. LR juga lebih tahan terhadap overfitting pada dataset kecil berkat regularisasi yang terintegrasi secara default.</div>
+          </div>
+        </div>
+
+        <div class="animate-in info-box border-blue">
+          <div class="icon-box sm blue"><i data-lucide="book-open"></i></div>
+          <div class="info-text">
+            Temuan ini sejalan dengan literatur yang menunjukkan bahwa Logistic Regression secara konsisten menjadi pilihan yang kompetitif untuk klasifikasi teks, terutama ketika dikombinasikan dengan representasi fitur TF-IDF dan penanganan class imbalance yang tepat.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 14: KESIMPULAN -->
+    <div class="slide" id="slide-14">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Kesimpulan</div>
+        <h2 class="animate-in">Ringkasan <span class="gradient-text">temuan utama</span></h2>
+
+        <div class="cards-grid cols-2 animate-in">
+          <div class="card" style="border-left:3px solid var(--accent-green);">
+            <div class="card-header">
+              <div class="icon-box md green"><i data-lucide="check"></i></div>
+              <div class="card-title">Pipeline End-to-End Berhasil Dibangun</div>
+            </div>
+            <div class="card-desc">Sistem lengkap dari pengumpulan data primer menggunakan Playwright, feature engineering, preprocessing teks dengan Sastrawi, ekstraksi fitur TF-IDF, hingga pemodelan dan evaluasi — berhasil diimplementasikan dan menghasilkan model yang siap digunakan untuk prediksi sentimen.</div>
+          </div>
+          <div class="card" style="border-left:3px solid var(--accent-orange);">
+            <div class="card-header">
+              <div class="icon-box md orange"><i data-lucide="trophy"></i></div>
+              <div class="card-title">Logistic Regression sebagai Model Terbaik</div>
+            </div>
+            <div class="card-desc">Dari perbandingan tiga algoritma, Logistic Regression memberikan performa terbaik dengan F1-Score weighted 0,732 dan akurasi 73,1%. Model ini paling seimbang dalam mengenali ketiga kelas sentimen, mengungguli SVM (F1: 0,717) dan Naive Bayes (F1: 0,685).</div>
+          </div>
+          <div class="card" style="border-left:3px solid var(--accent-purple);">
+            <div class="card-header">
+              <div class="icon-box md purple"><i data-lucide="bar-chart-2"></i></div>
+              <div class="card-title">Performa Kompetitif terhadap Studi Sejenis</div>
+            </div>
+            <div class="card-desc">Weighted F1-Score (0,732) lebih tinggi dari macro-F1 yang dilaporkan penelitian [5] (0,58), meskipun akurasi headline lebih rendah. Ini menunjukkan model lebih seimbang dan tidak hanya bergantung pada prediksi kelas mayoritas.</div>
+          </div>
+          <div class="card" style="border-left:3px solid var(--accent-pink);">
+            <div class="card-header">
+              <div class="icon-box md red"><i data-lucide="search"></i></div>
+              <div class="card-title">Temuan Unik Teridentifikasi</div>
+            </div>
+            <div class="card-desc">Kontaminasi data dari balasan penjual (seller reply leakage) dan artefak translasi emoji merupakan temuan yang jarang dibahas dalam literatur, namun berpotensi signifikan mempengaruhi kualitas analisis sentimen pada ulasan e-commerce.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 15: SARAN -->
+    <div class="slide" id="slide-15">
+      <div class="slide-inner">
+        <div class="animate-in slide-tag">Saran Pengembangan</div>
+        <h2 class="animate-in">Rekomendasi untuk <span class="gradient-text">penelitian selanjutnya</span></h2>
+        <p class="subtitle animate-in">Berdasarkan temuan dan keterbatasan penelitian ini, terdapat beberapa area yang dapat dikembangkan untuk meningkatkan kualitas analisis sentimen pada ulasan e-commerce.</p>
+
+        <div class="animate-in" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="card" style="display:flex; gap:18px; align-items:flex-start;">
+            <div class="icon-box md red"><i data-lucide="filter"></i></div>
+            <div>
+              <div class="card-title" style="margin-bottom:6px;">Pemisahan Teks Balasan Penjual</div>
+              <div class="card-desc">Menambahkan tahap preprocessing untuk mendeteksi dan memisahkan teks balasan penjual dari teks ulasan pelanggan. Bisa dilakukan dengan heuristik pattern matching terhadap template balasan, atau dengan menandai elemen DOM yang berbeda saat proses scraping.</div>
+            </div>
+          </div>
+          <div class="card" style="display:flex; gap:18px; align-items:flex-start;">
+            <div class="icon-box md blue"><i data-lucide="database"></i></div>
+            <div>
+              <div class="card-title" style="margin-bottom:6px;">Penambahan Volume Data</div>
+              <div class="card-desc">Memperbesar dataset terutama untuk kelas Netral dan Negatif yang saat ini underrepresented. Scraping dari lebih banyak produk atau toko lain dalam domain kosmetik dapat memberikan sampel yang lebih bervariasi dan meningkatkan kemampuan generalisasi model.</div>
+            </div>
+          </div>
+          <div class="card" style="display:flex; gap:18px; align-items:flex-start;">
+            <div class="icon-box md purple"><i data-lucide="flask-conical"></i></div>
+            <div>
+              <div class="card-title" style="margin-bottom:6px;">Eksplorasi Teknik Oversampling</div>
+              <div class="card-desc">Membandingkan pendekatan <code style="background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:3px; font-size:12px;">class_weight='balanced'</code> yang digunakan saat ini dengan teknik oversampling seperti SMOTE atau Random Oversampling. Pendekatan berbeda mungkin memberikan trade-off performa yang lebih optimal.</div>
+            </div>
+          </div>
+          <div class="card" style="display:flex; gap:18px; align-items:flex-start;">
+            <div class="icon-box md green"><i data-lucide="brain"></i></div>
+            <div>
+              <div class="card-title" style="margin-bottom:6px;">Eksplorasi Model Deep Learning (IndoBERT)</div>
+              <div class="card-desc">Model transformer seperti IndoBERT yang di-pretrain pada korpus Bahasa Indonesia diharapkan lebih mampu menangkap konteks dan relasi antar kata, mengatasi keterbatasan TF-IDF yang hanya berbasis frekuensi tanpa mempertimbangkan urutan atau makna kontekstual kata.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 16: TERIMA KASIH -->
+    <div class="slide" id="slide-16">
+      <div class="slide-inner" style="align-items:center; text-align:center;">
+        <div class="animate-in thankyou-title">
+          <span class="gradient-text">Terima Kasih</span>
+        </div>
+        <p class="animate-in thankyou-sub">Sesi tanya jawab terbuka untuk diskusi lebih lanjut.</p>
+        <div class="animate-in" style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; justify-content:center;">
+          <div class="card" style="padding:16px 24px; text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Presentasi oleh</div>
+            <div style="font-size:16px; font-weight:700; margin-top:4px;">Kelompok 4</div>
+          </div>
+          <div class="card" style="padding:16px 24px; text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Program Studi</div>
+            <div style="font-size:16px; font-weight:700; margin-top:4px;">Teknik Informatika</div>
+          </div>
+          <div class="card" style="padding:16px 24px; text-align:center;">
+            <div style="font-size:13px; color:var(--text-muted);">Universitas</div>
+            <div style="font-size:16px; font-weight:700; margin-top:4px;">UIN Syarif Hidayatullah Jakarta</div>
+          </div>
+        </div>
+        <p class="animate-in" style="font-size:13px; color:var(--text-muted); margin-top:20px;">
+          Mata Kuliah Sains Data · Fakultas Sains dan Teknologi
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PAGE COUNTER -->
+  <div class="page-counter">
+    <span class="current" id="current-slide">1</span>
+    <span class="separator">/</span>
+    <span id="total-slides">17</span>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+    document.getElementById('total-slides').textContent = totalSlides;
+
+    function goToSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      slides[currentSlide].classList.remove('active');
+      currentSlide = index;
+      slides[currentSlide].classList.add('active');
+      document.getElementById('current-slide').textContent = currentSlide + 1;
+    }
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+      else if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+      else if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
+    });
+
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      const dX = e.changedTouches[0].screenX - touchStartX, dY = e.changedTouches[0].screenY - touchStartY;
+      if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > 60) { if (dX < 0) nextSlide(); else prevSlide(); }
+    }, { passive: true });
+
+    goToSlide(0);
+  </script>
+</body>
+</html>
